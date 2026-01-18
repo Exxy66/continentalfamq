@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continental FamQ | Главная</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-dark: #0a0a0a;
+            --secondary-dark: #1a1a1a;
+            --accent-color: #C90C0F;
+            --accent-glow: rgba(201, 12, 15, 0.3);
+            --text-light: #f0f0f0;
+            --text-muted: #aaaaaa;
+            --border-color: #333;
+        }
+
+        body {
+            background-color: var(--primary-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(201, 12, 15, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(201, 12, 15, 0.05) 0%, transparent 20%);
+            overflow-x: hidden;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background-color: rgba(10, 10, 10, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #ff0000, var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .logo span {
+            color: var(--accent-color);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 35px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 8px 0;
+            position: relative;
+            transition: color 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-color);
+        }
+
+        .nav-link.active {
+            color: var(--accent-color);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Страницы */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Главная страница */
+        .hero {
+            text-align: center;
+            padding: 100px 20px 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #fff, var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            max-width: 800px;
+            margin: 0 auto 50px;
+            line-height: 1.7;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+        }
+
+        .cta-button:hover {
+            background-color: #e00;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 60px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background-color: rgba(26, 26, 26, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-color);
+        }
+
+        .feature-card i {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Страница вступления (заявка) */
+        .criteria-section {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 40px 60px;
+            background-color: rgba(26, 26, 26, 0.7);
+            border-radius: 15px;
+            margin-bottom: 50px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            margin-bottom: 40px;
+            position: relative;
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .criteria-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .criterion {
+            background-color: rgba(40, 40, 40, 0.6);
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-color);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .criterion:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .criterion i {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+
+        .criterion h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .criterion p {
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .application-form {
+            max-width: 800px;
+            margin: 0 auto 80px;
+            padding: 0 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            background-color: rgba(40, 40, 40, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .submit-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+            margin: 40px auto 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            background-color: #e00;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .submit-btn:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .info-note {
+            text-align: center;
+            background-color: rgba(201, 12, 15, 0.1);
+            border: 1px solid rgba(201, 12, 15, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            font-size: 1.1rem;
+        }
+
+        .info-note i {
+            color: var(--accent-color);
+            margin-right: 10px;
+        }
+
+        /* Страница медиа */
+        .media-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .media-item {
+            background-color: rgba(26, 26, 26, 0.7);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s;
+        }
+
+        .media-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+
+        .media-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .media-content {
+            padding: 20px;
+        }
+
+        .media-content h3 {
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .media-content p {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+
+        .media-date {
+            color: var(--accent-color);
+            font-size: 0.9rem;
+        }
+
+        /* Снежинки */
+        .snowflakes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .snowflake {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+            user-select: none;
+            opacity: 0.8;
+        }
+
+        /* Футер */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 60px;
+        }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-dark);
+            border-left: 4px solid var(--accent-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left-color: #2ecc71;
+        }
+        
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-content i {
+            font-size: 1.2rem;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 5px;
+            margin-left: 15px;
+        }
+        
+        .notification-close:hover {
+            color: rgb(255, 0, 0);
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+            
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background-color: rgba(10, 10, 10, 0.98);
+                flex-direction: column;
+                padding: 20px;
+                border-top: 1px solid var(--border-color);
+            }
+            
+            .nav-links.active {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                padding: 40px 20px;
+            }
+            
+            .criteria-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .criteria-section, .application-form {
+                padding: 25px;
+            }
+            
+            .media-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="snowflakes" id="snowflakes"></div>
+    
+    <header class="header">
+        <div class="logo">Continental <span>FamQ</span></div>
+        
+        <nav class="nav-links" id="navLinks">
+            <a href="#home" class="nav-link active" data-page="home">Главная</a>
+            <a href="#join" class="nav-link" data-page="join">Вступить</a>
+            <a href="#media" class="nav-link" data-page="media">Медиа</a>
+        </nav>
+        
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- Главная страница -->
+    <section id="home" class="page active">
+        <section class="hero">
+            <h1>Добро пожаловать в Continental FamQ</h1>
+            <p>Мы строим не просто группировку, а настоящую семью в мире Los Santos. С нами ты найдёшь верных друзей, интересные RP-истории и поддержку в любых начинаниях.</p>
+            <a href="#join" class="cta-button" data-page="join">Подать заявку</a>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Безопасность и поддержка</h3>
+                <p>Мы гарантируем безопасность каждому члену семьи и всегда готовы прийти на помощь в трудную минуту.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-chart-line"></i>
+                <h3>Развитие и рост</h3>
+                <p>С нами ты сможешь развивать своего персонажа, участвовать в крупных проектах и влиять на мир сервера.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-users"></i>
+                <h3>Дружная команда</h3>
+                <p>Наш основной принцип — семья превыше всего. Мы заботимся друг о друге и работаем как единый организм.</p>
+            </div>
+        </section>
+    </section>
+
+    <!-- Страница вступления -->
+    <section id="join" class="page">
+        <div style="padding-top: 40px;"></div>
+        <section class="criteria-section">
+            <h2 class="section-title">Требования к кандидатам</h2>
+            <ul class="criteria-list">
+                <li class="criterion">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Опыт в ролевой игре</h3>
+                    <p>От 6 месяцев активной игры на RP-серверах GTA 5. Важен не срок, а понимание основ ролевой игры.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-microphone"></i>
+                    <h3>Качественная связь</h3>
+                    <p>Наличие Discord и качественного микрофона. Чистая речь без фоновых шумов обязательна.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-book"></i>
+                    <h3>Знание правил</h3>
+                    <p>Отличное знание правил сервера и законов игрового мира. Нарушители не рассматриваются.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-balance-scale"></i>
+                    <h3>Понимание игровых законов</h3>
+                    <p>Знание законодательной базы Los Santos и умение работать в её рамках.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-users"></i>
+                    <h3>Командная работа</h3>
+                    <p>Способность работать в команде, принимать решения и нести за них ответственность.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-brain"></i>
+                    <h3>Адекватность и креативность</h3>
+                    <p>Умение создавать интересные RP-ситуации и реагировать на события в мире.</p>
+                </li>
+            </ul>
+            
+            <div class="info-note">
+                <i class="fas fa-clock"></i>
+                <span>Время рассмотрения заявки: от 12 до 48 часов. Мы тщательно проверяем каждого кандидата.</span>
+            </div>
+        </section>
+
+        <section class="application-form">
+            <h2 class="section-title">Анкета для вступления</h2>
+            <form id="applicationForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nickname">Игровой никнейм *</label>
+                        <input type="text" id="nickname" name="nickname" required placeholder="Введите ваш игровой ник">
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Ваш возраст *</label>
+                        <input type="number" id="age" name="age" min="12" max="40" required placeholder="18">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="discord">Discord (username#0000) *</label>
+                    <input type="text" id="discord" name="discord" required placeholder="username#0000
+                </div>
+                
+                <div class="form-group">
+                    <label for="experience">Опыт в GTA RP (в годах) *</label>
+                    <input type="number" id="experience" name="experience" min="0" max="120" required placeholder="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="character">Опишите вашего персонажа *</label>
+                    <textarea id="character" name="character" rows="4" required placeholder="Имя, возраст, краткая биография, основные черты характера..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="motivation">Почему вы хотите вступить в нашу семью? *</label>
+                    <textarea id="motivation" name="motivation" rows="4" required placeholder="Расскажите, что вас привлекает, какие цели вы преследуете..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="previousFamilies">Были ли вы в других семьях/организациях?</label>
+                    <textarea id="previousFamilies" name="previousFamilies" rows="3" placeholder="Если да, то в каких и почему ушли?"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timezone">Часовой пояс и время активности *</label>
+                    <select id="timezone" name="timezone" required>
+                        <option value="" disabled selected>Выберите ваш часовой пояс</option>
+                        <option value="msk">MSK (Москва)</option>
+                        <option value="eet">EET (Киев, Минск)</option>
+                        <option value="cet">CET (Европа)</option>
+                        <option value="other">Другой</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">Отправить заявку в Discord</button>
+            </form>
+        </section>
+    </section>
+
+    <!-- Страница медиа -->
+    <section id="media" class="page">
+        <div style="padding-top: 40px;"></div>
+        <section class="media-section">
+            <h2 class="section-title">Наши медиа материалы</h2>
+            <p style="text-align: center; margin-bottom: 40px; color: var(--text-muted); max-width: 800px; margin-left: auto; margin-right: auto;">
+                Здесь мы публикуем последние новости, скриншоты с мероприятий и важные объявления для участников семьи.
+            </p>
+            
+            <div class="media-grid">
+                <div class="media-item">
+                    <div style="background: linear-gradient(135deg, var(--accent-color), #ff0000); height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-users" style="font-size: 4rem; color: white;"></i>
+                    </div>
+                    <div class="media-content">
+                        <h3>Новые участники</h3>
+                        <p>В этом месяце к нашей семье присоединились 5 новых участников. Добро пожаловать!</p>
+                        <div class="media-date">15 января 2026</div>
+                    </div>
+                </div>
+                
+                <div class="media-item">
+                    <div style="background: linear-gradient(135deg, #333, #000); height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-calendar-alt" style="font-size: 4rem; color: var(--accent-color);"></i>
+                    </div>
+                    <div class="media-content">
+                        <h3>Плановое собрание</h3>
+                        <p>На этой неделе состоится общее собрание всех членов семьи. Обязательно посетите!</p>
+                        <div class="media-date">10 января 2026</div>
+                    </div>
+                </div>
+                
+                <div class="media-item">
+                    <div style="background: linear-gradient(135deg, #1a1a1a, #333); height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-trophy" style="font-size: 4rem; color: gold;"></i>
+                    </div>
+                    <div class="media-content">
+                        <h3>Достижения месяца</h3>
+                        <p>Наша семья заняла первое место в рейтинге активных организаций сервера!</p>
+                        <div class="media-date">5 января 2026</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <footer class="footer">
+        <p>Continental FamQ © 2026</p>
+        <p>По всем вопросам: <span id="discordLink">discord.gg/3597JbzZ7X</span></p>
+    </footer>
+
+    <script>
+        // === КОНФИГУРАЦИЯ ===
+        // ЗАМЕНИТЕ ЭТОТ URL НА СВОЙ DISCORD WEBHOOK
+        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1462181075941064858/Od-F83SOM_Z9yjMsKNoLRR8JHRTFfwiPLWsZKC6NTWmHzvHh6SORJS-398Ald8kr4Q-8';
+        
+        // Имя вашей семьи (отображается в Discord)
+        const FAMILY_NAME = 'Continental FamQ';
+        
+        // === КОНЕЦ КОНФИГУРАЦИИ ===
+
+        // Навигация между страницами
+        function initNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const navLinksContainer = document.getElementById('navLinks');
+            
+            // Переключение страниц
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetPage = this.getAttribute('data-page');
+                    
+                    // Обновляем активные классы
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    pages.forEach(page => {
+                        page.classList.remove('active');
+                        if (page.id === targetPage) {
+                            page.classList.add('active');
+                        }
+                    });
+                    
+                    // Закрываем мобильное меню если открыто
+                    if (window.innerWidth <= 768) {
+                        navLinksContainer.classList.remove('active');
+                    }
+                    
+                    // Прокручиваем к началу страницы
+                    window.scrollTo(0, 0);
+                });
+            });
+            
+            // Мобильное меню
+            mobileMenuBtn.addEventListener('click', function() {
+                navLinksContainer.classList.toggle('active');
+            });
+            
+            // Закрытие меню при клике на ссылку
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        navLinksContainer.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Обработка хэша в URL
+            function handleHashChange() {
+                const hash = window.location.hash.substring(1) || 'home';
+                const targetLink = document.querySelector(`.nav-link[data-page="${hash}"]`);
+                
+                if (targetLink) {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    targetLink.classList.add('active');
+                    
+                    pages.forEach(page => {
+                        page.classList.remove('active');
+                        if (page.id === hash) {
+                            page.classList.add('active');
+                        }
+                    });
+                }
+            }
+            
+            // Инициализация по хэшу
+            handleHashChange();
+            
+            // Слушаем изменения хэша
+            window.addEventListener('hashchange', handleHashChange);
+        }
+
+        // Создание снежинок
+        function createSnowflakes() {
+            const snowflakesContainer = document.getElementById('snowflakes');
+            const snowflakeCount = 50;
+            
+            for (let i = 0; i < snowflakeCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.classList.add('snowflake');
+                snowflake.innerHTML = '❄';
+                
+                const size = Math.random() * 20 + 10;
+                const startX = Math.random() * 100;
+                const duration = Math.random() * 20 + 20;
+                const delay = Math.random() * 20;
+                const opacity = Math.random() * 0.7 + 0.3;
+                
+                snowflake.style.fontSize = `${size}px`;
+                snowflake.style.left = `${startX}%`;
+                snowflake.style.animationDuration = `${duration}s`;
+                snowflake.style.animationDelay = `${delay}s`;
+                snowflake.style.opacity = opacity;
+                
+                snowflakesContainer.appendChild(snowflake);
+            }
+        }
+
+        // Показать уведомление
+        function showNotification(type, message) {
+            // Удаляем предыдущие уведомления
+            const oldNotification = document.querySelector('.notification');
+            if (oldNotification) {
+                oldNotification.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="notification-close"><i class="fas fa-times"></i></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Автоматическое скрытие
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 5000);
+            
+            // Закрытие по клику
+            notification.querySelector('.notification-close').addEventListener('click', () => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            });
+        }
+
+        // Валидация формы
+        function validateForm(formData) {
+            const errors = [];
+            
+            if (!formData.nickname || formData.nickname.length < 2) {
+                errors.push('Никнейм должен содержать минимум 2 символа');
+            }
+            
+            if (!formData.age || formData.age < 12 || formData.age > 40) {
+                errors.push('Возраст должен быть от 12 до 40 лет');
+            }
+            
+            if (!formData.discord || !formData.discord.match(/^[^#]+#\d{4}$/)) {
+                errors.push('Введите Discord в формате username#0000');
+            }
+            
+            if (!formData.experience || formData.experience < 0) {
+                errors.push('Укажите корректный опыт в месяцах');
+            }
+            
+            if (!formData.character || formData.character.length < 20) {
+                errors.push('Опишите персонажа (минимум 20 символов)');
+            }
+            
+            if (!formData.motivation || formData.motivation.length < 30) {
+                errors.push('Напишите мотивацию (минимум 30 символов)');
+            }
+            
+            if (!formData.timezone) {
+                errors.push('Выберите часовой пояс');
+            }
+            
+            return errors;
+        }
+
+        // Отправка в Discord
+        async function sendToDiscord(formData) {
+            try {
+                // Формируем embed сообщение для Discord
+                const embed = {
+                    title: `🎯 НОВАЯ ЗАЯВКА В ${FAMILY_NAME}`,
+                    color: 15158332, // Красный цвет
+                    timestamp: new Date().toISOString(),
+                    fields: [
+                        {
+                            name: "👤 ИГРОК",
+                            value: `**Никнейм:** ${formData.nickname}\n**Возраст:** ${formData.age}\n**Discord:** ${formData.discord}`,
+                            inline: false
+                        },
+                        {
+                            name: "🎮 ОПЫТ И АКТИВНОСТЬ",
+                            value: `**Опыт в RP:** ${formData.experience} месяцев\n**Часовой пояс:** ${getTimezoneLabel(formData.timezone)}\n`,
+                            inline: true
+                        },
+
+                        {
+                            name: "🎯 МОТИВАЦИЯ",
+                            value: `\`\`\`${formData.motivation.substring(0, 1000)}${formData.motivation.length > 1000 ? '...' : ''}\`\`\``,
+                            inline: false
+                        }
+                    ],
+                    footer: {
+                        text: `Заявка отправлена через сайт ${FAMILY_NAME}`
+                    }
+                };
+
+                // Добавляем поле с предыдущими семьями, если указано
+                if (formData.previousFamilies && formData.previousFamilies.trim()) {
+                    embed.fields.push({
+                        name: "🏢 ПРЕДЫДУЩИЕ СЕМЬИ",
+                        value: `\`\`\`${formData.previousFamilies.substring(0, 500)}${formData.previousFamilies.length > 500 ? '...' : ''}\`\`\``,
+                        inline: false
+                    });
+                }
+
+                // Данные для отправки
+                const discordData = {
+                    username: `${FAMILY_NAME}`,
+                    avatar_url: "https://cdn.discordapp.com/embed/avatars/0.png",
+                    embeds: [embed]
+                };
+
+                // Отправляем запрос
+                const response = await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(discordData)
+                });
+
+                return response.ok;
+                
+            } catch (error) {
+                console.error('Ошибка отправки в Discord:', error);
+                return false;
+            }
+        }
+
+        // Перевод значения часового пояса в текст
+        function getTimezoneLabel(value) {
+            const timezones = {
+                'msk': 'MSK (Москва)',
+                'eet': 'EET (Киев, Минск)',
+                'cet': 'CET (Европа)',
+                'other': 'Другой'
+            };
+            return timezones[value] || value;
+        }
+
+        // Сохранение в локальное хранилище
+        function saveToLocalStorage(formData) {
+            try {
+                const submissions = JSON.parse(localStorage.getItem('familySubmissions') || '[]');
+                submissions.push({
+                    ...formData,
+                    timestamp: new Date().toISOString(),
+                    sentToDiscord: true
+                });
+                localStorage.setItem('familySubmissions', JSON.stringify(submissions));
+            } catch (e) {
+                console.log('Не удалось сохранить в локальное хранилище');
+            }
+        }
+
+        // Обработка отправки формы
+        function initForm() {
+            const applicationForm = document.getElementById('applicationForm');
+            if (!applicationForm) return;
+            
+            applicationForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Собираем данные
+                const formData = {
+                    nickname: document.getElementById('nickname').value.trim(),
+                    age: document.getElementById('age').value.trim(),
+                    discord: document.getElementById('discord').value.trim(),
+                    experience: document.getElementById('experience').value.trim(),
+                    character: document.getElementById('character').value.trim(),
+                    motivation: document.getElementById('motivation').value.trim(),
+                    previousFamilies: document.getElementById('previousFamilies').value.trim(),
+                    timezone: document.getElementById('timezone').value
+                };
+                
+                // Валидация
+                const errors = validateForm(formData);
+                if (errors.length > 0) {
+                    showNotification('error', errors.join('<br>'));
+                    return;
+                }
+                
+                // Блокируем кнопку
+                const submitBtn = document.getElementById('submitBtn');
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Отправка в Discord...';
+                submitBtn.style.opacity = '0.7';
+                
+                // Пытаемся отправить в Discord
+                const success = await sendToDiscord(formData);
+                
+                if (success) {
+                    // Успешно отправлено
+                    submitBtn.textContent = '✅ Отправлено!';
+                    submitBtn.style.backgroundColor = '#2ecc71';
+                    showNotification('success', 'Заявка отправлена в Discord! Мы свяжемся с вами в течение 48 часов.');
+                    
+                    // Сохраняем локально
+                    saveToLocalStorage(formData);
+                    
+                    // Очищаем форму через 3 секунды
+                    setTimeout(() => {
+                        this.reset();
+                        submitBtn.textContent = originalText;
+                        submitBtn.style.backgroundColor = '';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 3000);
+                    
+                } else {
+                    // Ошибка отправки
+                    submitBtn.textContent = '❌ Ошибка';
+                    submitBtn.style.backgroundColor = '#e74c3c';
+                    showNotification('error', 'Ошибка отправки. Пожалуйста, свяжитесь с нами напрямую в Discord.');
+                    
+                    // Даем возможность повторить
+                    setTimeout(() => {
+                        submitBtn.textContent = 'Повторить отправку';
+                        submitBtn.style.backgroundColor = '';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 3000);
+                }
+            });
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            createSnowflakes();
+            initNavigation();
+            initForm();
+            
+            // Анимация для элементов при прокрутке
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.criterion, .feature-card, .media-item').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.5s, transform 0.5s';
+                observer.observe(el);
+            });
+            
+            // Проверка конфигурации
+            if (DISCORD_WEBHOOK_URL.includes('ВАШ_ID')) {
+                console.warn('⚠️ ВНИМАНИЕ: Не забудьте заменить DISCORD_WEBHOOK_URL на ваш реальный webhook!');
+                showNotification('error', 'Настройте Discord Webhook URL в коде (строка 345)');
+            }
+            
+            console.log(`${FAMILY_NAME} - Сайт запущен`);
+        });
+
+        // Анимация снежинок
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                0% {
+                    transform: translateY(-100px) rotate(0deg);
+                    opacity: 0.8;
+                }
+                100% {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+            
+            .snowflake {
+                animation-name: fall;
+                animation-timing-function: linear;
+                animation-iteration-count: infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
