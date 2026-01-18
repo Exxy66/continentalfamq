@@ -1,0 +1,2570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continental FamQ | Главная</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-dark: #0a0a0a;
+            --secondary-dark: #1a1a1a;
+            --accent-color: #C90C0F;
+            --accent-glow: rgba(201, 12, 15, 0.3);
+            --text-light: #f0f0f0;
+            --text-muted: #aaaaaa;
+            --border-color: #333;
+            --danger-color: #dc3545;
+            --danger-glow: rgba(220, 53, 69, 0.3);
+            --warning-color: #ffc107;
+            --warning-glow: rgba(255, 193, 7, 0.3);
+            --success-color: #28a745;
+            --success-glow: rgba(40, 167, 69, 0.3);
+            --founder-color: #FFD700;
+            --leader-color: #C90C0F;
+            --dep-leader-color: #E74C3C;
+            --curator-color: #3498DB;
+            --developer-color: #9B59B6;
+        }
+
+        body {
+            background-color: var(--primary-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(201, 12, 15, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(201, 12, 15, 0.05) 0%, transparent 20%);
+            overflow-x: hidden;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background-color: rgba(10, 10, 10, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #ff0000, var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .logo span {
+            color: var(--accent-color);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 35px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 8px 0;
+            position: relative;
+            transition: color 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-color);
+        }
+
+        .nav-link.active {
+            color: var(--accent-color);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Страницы */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Главная страница */
+        .hero {
+            text-align: center;
+            padding: 100px 20px 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #fff, var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            max-width: 800px;
+            margin: 0 auto 50px;
+            line-height: 1.7;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-button:hover {
+            background-color: #e00;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 60px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background-color: rgba(26, 26, 26, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-color);
+        }
+
+        .feature-card i {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Страница вступления (заявка) */
+        .criteria-section {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 40px 60px;
+            background-color: rgba(26, 26, 26, 0.7);
+            border-radius: 15px;
+            margin-bottom: 50px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            margin-bottom: 40px;
+            position: relative;
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .criteria-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .criterion {
+            background-color: rgba(40, 40, 40, 0.6);
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-color);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .criterion:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .criterion i {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+
+        .criterion h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .criterion p {
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .application-form {
+            max-width: 800px;
+            margin: 0 auto 80px;
+            padding: 0 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            background-color: rgba(40, 40, 40, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .submit-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+            margin: 40px auto 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            background-color: #e00;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .submit-btn:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .submit-btn.danger {
+            background-color: var(--danger-color);
+        }
+
+        .submit-btn.danger:hover {
+            background-color: #c82333;
+            box-shadow: 0 0 25px var(--danger-glow);
+        }
+
+        .submit-btn.warning {
+            background-color: var(--warning-color);
+            color: #000;
+        }
+
+        .submit-btn.warning:hover {
+            background-color: #e0a800;
+            box-shadow: 0 0 25px var(--warning-glow);
+        }
+
+        .submit-btn.success {
+            background-color: var(--success-color);
+        }
+
+        .submit-btn.success:hover {
+            background-color: #218838;
+            box-shadow: 0 0 25px var(--success-glow);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .submit-btn {
+            margin: 0;
+        }
+
+        .info-note {
+            text-align: center;
+            background-color: rgba(201, 12, 15, 0.1);
+            border: 1px solid rgba(201, 12, 15, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            font-size: 1.1rem;
+        }
+
+        .info-note i {
+            color: var(--accent-color);
+            margin-right: 10px;
+        }
+
+        .info-note.danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-color: rgba(220, 53, 69, 0.3);
+        }
+
+        .info-note.warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-color: rgba(255, 193, 7, 0.3);
+        }
+
+        .guide-box {
+            background-color: rgba(40, 40, 40, 0.6);
+            border: 1px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .guide-box h4 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .guide-box ol {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .guide-box li {
+            margin-bottom: 10px;
+            color: var(--text-muted);
+        }
+
+        .guide-image {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .guide-image img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Черный список */
+        .blacklist-section {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .blacklist-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 992px) {
+            .blacklist-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .blacklist-form-container {
+            background-color: rgba(26, 26, 26, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .blacklist-list-container {
+            background-color: rgba(26, 26, 26, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .blacklist-list {
+            list-style: none;
+        }
+
+        .blacklist-item {
+            background-color: rgba(40, 40, 40, 0.6);
+            border-left: 4px solid var(--danger-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+
+        .blacklist-item:hover {
+            transform: translateX(5px);
+        }
+
+        .blacklist-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .blacklist-item-id {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .blacklist-item-nickname {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .blacklist-item-discord {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .blacklist-item-reason {
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .blacklist-item-date {
+            color: var(--danger-color);
+            font-size: 0.8rem;
+            text-align: right;
+        }
+
+        .blacklist-item-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .blacklist-empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .blacklist-empty i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--danger-color);
+        }
+
+        /* Форма удаления из черного списка */
+        .remove-blacklist-form {
+            background-color: rgba(26, 26, 26, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            margin-top: 40px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Страница медиа */
+        .media-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .media-item {
+            background-color: rgba(26, 26, 26, 0.7);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .media-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+
+        .media-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .media-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .media-content h3 {
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .media-content p {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+
+        .media-date {
+            color: var(--accent-color);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .media-button {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: auto;
+        }
+
+        .media-button:hover {
+            background-color: #e00;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Страница инфо */
+        .info-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .info-content {
+            background-color: rgba(26, 26, 26, 0.7);
+            padding: 40px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-card {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .info-card i {
+            font-size: 4rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        .info-card h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .info-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+
+        .info-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(40, 40, 40, 0.6);
+            border-radius: 10px;
+        }
+
+        .stat-item .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+
+        .stat-item .label {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Стили для иерархии старшего состава */
+        .hierarchy-section {
+            margin-top: 60px;
+            position: relative;
+        }
+
+        .hierarchy-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 60px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(201, 12, 15, 0.5);
+            position: relative;
+        }
+
+        .hierarchy-title::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 3px;
+            background: linear-gradient(to right, transparent, var(--accent-color), transparent);
+        }
+
+        /* Контейнер для иерархии */
+        .hierarchy-container {
+            position: relative;
+            min-height: 600px;
+            margin: 0 auto;
+        }
+
+        /* Уровни иерархии */
+        .hierarchy-level {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        /* Соединительные линии */
+        .hierarchy-connector {
+            position: absolute;
+            background: var(--accent-color);
+            z-index: 1;
+        }
+
+        /* Карточка основателя (самый верхний уровень) */
+        .founder-card {
+            position: relative;
+            z-index: 10;
+            margin-bottom: 30px;
+        }
+
+        .founder-card .leadership-card {
+            border: 3px solid var(--founder-color);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        /* Уровень лидеров */
+        .leaders-level {
+            margin-top: 20px;
+            margin-bottom: 60px;
+        }
+
+        /* Уровень заместителей */
+        .deputies-level {
+            margin-bottom: 40px;
+        }
+
+        /* Уровень кураторов */
+        .curators-level {
+            margin-bottom: 20px;
+        }
+
+        /* Общие стили карточек */
+        .leadership-card {
+            background: rgba(40, 40, 40, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            width: 280px;
+            text-align: center;
+            z-index: 2;
+        }
+
+        .leadership-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .leadership-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+        }
+
+        /* Цвета для разных ролей */
+        .leadership-card.founder::before {
+            background: linear-gradient(to right, var(--founder-color), #FFA500);
+        }
+
+        .leadership-card.leader::before {
+            background: linear-gradient(to right, var(--leader-color), #FF0000);
+        }
+
+        .leadership-card.dep-leader::before {
+            background: linear-gradient(to right, var(--dep-leader-color), #FF6B6B);
+        }
+
+        .leadership-card.curator::before {
+            background: linear-gradient(to right, var(--curator-color), #1ABC9C);
+        }
+
+        .leadership-card.developer::before {
+            background: linear-gradient(to right, var(--developer-color), #8E44AD);
+        }
+
+        .leadership-role {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: white;
+        }
+
+        .leadership-card.founder .leadership-role {
+            background: var(--founder-color);
+            color: #000;
+            text-shadow: none;
+        }
+
+        .leadership-card.leader .leadership-role {
+            background: var(--leader-color);
+        }
+
+        .leadership-card.dep-leader .leadership-role {
+            background: var(--dep-leader-color);
+        }
+
+        .leadership-card.curator .leadership-role {
+            background: var(--curator-color);
+        }
+
+        .leadership-card.developer .leadership-role {
+            background: var(--developer-color);
+        }
+
+        .leadership-name {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .leadership-details {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .leadership-details span {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .leadership-details strong {
+            color: #fff;
+        }
+
+        .discord-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #5865F2;
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .discord-btn:hover {
+            background: #4752C4;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(88, 101, 242, 0.4);
+        }
+
+        .discord-btn i {
+            font-size: 1.2rem;
+        }
+
+        /* Снежинки */
+        .snowflakes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .snowflake {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+            user-select: none;
+            opacity: 0.8;
+        }
+
+        /* Футер */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 60px;
+        }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-dark);
+            border-left: 4px solid var(--accent-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left-color: #2ecc71;
+        }
+        
+        .notification.error {
+            border-left-color: var(--danger-color);
+        }
+        
+        .notification.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-content i {
+            font-size: 1.2rem;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 5px;
+            margin-left: 15px;
+        }
+        
+        .notification-close:hover {
+            color: rgb(255, 0, 0);
+        }
+
+        /* Модальное окно подтверждения */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal {
+            background-color: var(--secondary-dark);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            max-width: 500px;
+            width: 100%;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+        }
+        
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            font-size: 1.5rem;
+            color: var(--text-light);
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: color 0.3s;
+        }
+        
+        .modal-close:hover {
+            color: var(--accent-color);
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        
+        .modal-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+        
+        .modal-btn.confirm {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .modal-btn.confirm:hover {
+            background-color: #c82333;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--danger-glow);
+        }
+        
+        .modal-btn.cancel {
+            background-color: #666;
+            color: white;
+        }
+        
+        .modal-btn.cancel:hover {
+            background-color: #777;
+            transform: scale(1.05);
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+            
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background-color: rgba(10, 10, 10, 0.98);
+                flex-direction: column;
+                padding: 20px;
+                border-top: 1px solid var(--border-color);
+            }
+            
+            .nav-links.active {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                padding: 40px 20px;
+            }
+            
+            .criteria-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .criteria-section, .application-form {
+                padding: 25px;
+            }
+            
+            .media-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-content {
+                padding: 25px;
+            }
+            
+            .blacklist-container {
+                gap: 20px;
+            }
+            
+            .blacklist-item-actions {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .hierarchy-level {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            
+            .leadership-card {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .hierarchy-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="snowflakes" id="snowflakes"></div>
+    
+    <!-- Модальное окно подтверждения удаления -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Подтверждение удаления</h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">Вы уверены, что хотите выполнить это действие?</p>
+                <div class="form-group" id="passwordInputContainer" style="display: none; margin-top: 20px;">
+                    <label for="confirmPassword">Введите пароль для подтверждения:</label>
+                    <input type="password" id="confirmPassword" placeholder="Введите пароль">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="modalCancel">Отмена</button>
+                <button class="modal-btn confirm" id="modalConfirm">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+    
+    <header class="header">
+        <div class="logo">Continental <span>FamQ</span></div>
+        
+        <nav class="nav-links" id="navLinks">
+            <a href="#home" class="nav-link active" data-page="home">Главная</a>
+            <a href="#join" class="nav-link" data-page="join">Вступить</a>
+            <a href="#media" class="nav-link" data-page="media">Медиа</a>
+            <a href="#blacklist" class="nav-link" data-page="blacklist">Черный список</a>
+            <a href="#info" class="nav-link" data-page="info">Инфо</a>
+        </nav>
+        
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- Главная страница -->
+    <section id="home" class="page active">
+        <section class="hero">
+            <h1>Добро пожаловать в Continental FamQ</h1>
+            <p>Мы строим не просто группировку, а настоящую семью в мире Los Santos. С нами ты найдёшь верных друзей, интересные RP-истории и поддержку в любых начинаниях.</p>
+            <a href="#join" class="cta-button" onclick="goToApplication()">Подать заявку</a>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Безопасность и поддержка</h3>
+                <p>Мы гарантируем безопасность каждому члену семьи и всегда готовы прийти на помощь в трудную минуту.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-chart-line"></i>
+                <h3>Развитие и рост</h3>
+                <p>С нами ты сможешь развивать своего персонажа, участвовать в крупных проектах и влиять на мир сервера.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-users"></i>
+                <h3>Дружная команда</h3>
+                <p>Наш основной принцип — семья превыше всего. Мы заботимся друг о друге и работаем как единый организм.</p>
+            </div>
+        </section>
+    </section>
+
+    <!-- Страница вступления -->
+    <section id="join" class="page">
+        <div style="padding-top: 40px;"></div>
+        <section class="criteria-section">
+            <h2 class="section-title">Требования к кандидатам</h2>
+            <ul class="criteria-list">
+                <li class="criterion">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Опыт в ролевой игре</h3>
+                    <p>От 6 месяцев активной игры на RP-серверах GTA 5. Важен не срок, а понимание основ ролевой игры.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-microphone"></i>
+                    <h3>Качественная связь</h3>
+                    <p>Наличие Discord и качественного микрофона. Чистая речь без фоновых шумов обязательна.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-book"></i>
+                    <h3>Знание правил</h3>
+                    <p>Отличное знание правил сервера и законов игрового мира. Нарушители не рассматриваются.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-balance-scale"></i>
+                    <h3>Понимание игровых законов</h3>
+                    <p>Знание законодательной базы Los Santos и умение работать в её рамках.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-users"></i>
+                    <h3>Командная работа</h3>
+                    <p>Способность работать в команде, принимать решения и нести за них ответственность.</p>
+                </li>
+                <li class="criterion">
+                    <i class="fas fa-brain"></i>
+                    <h3>Адекватность и креативность</h3>
+                    <p>Умение создавать интересные RP-ситуации и реагировать на события в мире.</p>
+                </li>
+            </ul>
+            
+            <div class="info-note">
+                <i class="fas fa-clock"></i>
+                <span>Время рассмотрения заявки: от 12 до 48 часов. Мы тщательно проверяем каждого кандидата.</span>
+            </div>
+        </section>
+
+        <section class="application-form">
+            <h2 class="section-title">Анкета для вступления</h2>
+            
+            <div class="guide-box">
+                <h4><i class="fas fa-info-circle"></i> Как получить ID пользователя в Discord:</h4>
+                <ol>
+                    <li>Откройте Discord и перейдите в настройки (шестерёнка внизу слева)</li>
+                    <li>В разделе "Настройки приложения" найдите "Расширенные"</li>
+                    <li>Включите "Режим разработчика"</li>
+                    <li>Теперь вы можете нажать правой кнопкой мыши на любого пользователя и выбрать "Копировать ID"</li>
+                    <li>Ваш собственный ID можно скопировать, нажав правой кнопкой мыши на ваш аватар в списке участников</li>
+                </ol>
+                <p><strong>Пример ID:</strong> 123456789012345678</p>
+            </div>
+            
+            <form id="applicationForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nickname">Игровой никнейм в GTA *</label>
+                        <input type="text" id="nickname" name="nickname" required placeholder="Введите ваш игровой ник в GTA" minlength="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Ваш возраст *</label>
+                        <input type="number" id="age" name="age" min="10" max="99" required placeholder="18">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="discord_id">Discord ID *</label>
+                    <input type="text" id="discord_id" name="discord_id" required placeholder="123456789012345678" pattern="\d{17,20}">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hours_per_day">Онлайн (часов в день) *</label>
+                        <input type="number" id="hours_per_day" name="hours_per_day" min="0" max="24" required placeholder="Пример: 4">
+                    </div>
+                    <div class="form-group">
+                        <label for="total_hours">Всего часов в GTA 5 RP *</label>
+                        <input type="number" id="total_hours" name="total_hours" min="0" max="99999" required placeholder="Пример: 500">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="motivation">Почему вы хотите вступить в нашу семью? *</label>
+                    <textarea id="motivation" name="motivation" rows="4" required placeholder="Расскажите, что вас привлекает, какие цели вы преследуете, почему именно наша семья..." minlength="1"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="previousFamilies">Были ли вы в других семьях/организациях?</label>
+                    <textarea id="previousFamilies" name="previousFamilies" rows="3" placeholder="Если да, то в каких и почему ушли?" minlength="0"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timezone">Часовой пояс и время активности *</label>
+                    <select id="timezone" name="timezone" required>
+                        <option value="" disabled selected>Выберите ваш часовой пояс</option>
+                        <option value="msk">MSK (Москва)</option>
+                        <option value="eet">EET (Киев, Минск)</option>
+                        <option value="cet">CET (Европа)</option>
+                        <option value="other">Другой</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">Отправить заявку в Discord</button>
+            </form>
+        </section>
+    </section>
+
+    <!-- Страница медиа -->
+    <section id="media" class="page">
+        <div style="padding-top: 40px;"></div>
+        <section class="media-section">
+            <h2 class="section-title">Наши медиа материалы</h2>
+            <p style="text-align: center; margin-bottom: 40px; color: var(--text-muted); max-width: 800px; margin-left: auto; margin-right: auto;">
+                Здесь мы публикуем последние новости, скриншоты с мероприятий и важные объявления для участников семьи.
+            </p>
+            
+            <div class="media-grid">
+                <div class="media-item">
+                    <div style="background: linear-gradient(135deg, var(--accent-color), #ff0000); height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-users" style="font-size: 4rem; color: white;"></i>
+                    </div>
+                    <div class="media-content">
+                        <h3>Наша семья растет!</h3>
+                        <p>В нашей семье сейчас 50 активных участников! Мы продолжаем развиваться и приветствуем новых членов нашей большой семьи.</p>
+                        <div class="media-date">20 января 2026</div>
+                        <a href="#join" class="media-button" onclick="goToApplication()">Присоединиться</a>
+                    </div>
+                </div>
+                
+                <div class="media-item">
+                    <div style="background: linear-gradient(135deg, #5865F2, #7289DA); height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fab fa-discord" style="font-size: 4rem; color: white;"></i>
+                    </div>
+                    <div class="media-content">
+                        <h3>Наш Discord сервер</h3>
+                        <p>Присоединяйтесь к нашему официальному Discord серверу! Здесь вы найдете актуальные новости, сможете общаться с членами семьи и участвовать в обсуждениях.</p>
+                        <div class="media-date">Присоединяйтесь сейчас!</div>
+                        <a href="https://discord.gg/d2WtFWd8nS" target="_blank" class="media-button">
+                            <i class="fab fa-discord"></i> Перейти в Discord
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="media-item">
+                    <div style="background: linear-gradient(135deg, #1a1a1a, #333); height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-headset" style="font-size: 4rem; color: var(--accent-color);"></i>
+                    </div>
+                    <div class="media-content">
+                        <h3>Связь с куратором</h3>
+                        <p>По всем вопросам по семье, вступлению или по вопросам работы сайта пишите нашему куратору в Discord. Мы всегда готовы помочь и ответить на ваши вопросы!</p>
+                        <div class="media-date">Доступен в Discord</div>
+                        <a href="https://discord.com/users/exxy66" target="_blank" class="media-button">
+                            <i class="fas fa-user"></i> Написать exxy66
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- Черный список -->
+    <section id="blacklist" class="page">
+        <div style="padding-top: 40px;"></div>
+        <section class="blacklist-section">
+            <h2 class="section-title">Черный список семьи</h2>
+            
+            <div class="info-note danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Внимание! Внесение в черный список доступно только для доверенных членов семьи с паролем. Неправильное использование будет наказано.</span>
+            </div>
+            
+            <!-- Кнопки управления -->
+            <div class="action-buttons">
+                <button class="submit-btn danger" id="clearAllBtn">
+                    <i class="fas fa-trash"></i> Очистить весь черный список
+                </button>
+            </div>
+            
+            <div class="blacklist-container">
+                <!-- Форма добавления в черный список -->
+                <div class="blacklist-form-container">
+                    <h3 style="margin-bottom: 30px; color: var(--danger-color); text-align: center;">Добавить в черный список</h3>
+                    
+                    <form id="blacklistForm">
+                        <div class="form-group">
+                            <label for="blacklist_password">Ваш персональный пароль для внесения в ЧС *</label>
+                            <input type="password" id="blacklist_password" name="blacklist_password" required placeholder="Введите пароль" minlength="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="blacklist_nickname">Никнейм в GTA 5 RP кого хотите внести в черный список *</label>
+                            <input type="text" id="blacklist_nickname" name="blacklist_nickname" required placeholder="Введите никнейм игрока" minlength="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="blacklist_discord_id">Discord ID кого хотите внести в черный список *</label>
+                            <input type="text" id="blacklist_discord_id" name="blacklist_discord_id" required placeholder="123456789012345678" pattern="\d{17,20}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="blacklist_reason">Причина внесения в черный список *</label>
+                            <textarea id="blacklist_reason" name="blacklist_reason" rows="4" required placeholder="Опишите причину внесения в черный список..." minlength="1"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn danger" id="blacklistSubmitBtn">Добавить в черный список</button>
+                    </form>
+                </div>
+                
+                <!-- Список черного списка -->
+                <div class="blacklist-list-container">
+                    <h3 style="margin-bottom: 30px; color: var(--danger-color); text-align: center;">Текущий черный список</h3>
+                    
+                    <div id="blacklistList">
+                        <!-- Список будет заполняться динамически -->
+                        <div class="blacklist-empty">
+                            <i class="fas fa-ban"></i>
+                            <p>Черный список пуст</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">Здесь будут отображаться игроки, внесенные в черный список</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- Страница инфо -->
+    <section id="info" class="page">
+        <div style="padding-top: 40px;"></div>
+        <section class="info-section">
+            <h2 class="section-title">Информация о семье</h2>
+            
+            <div class="info-content">
+                <div class="info-card">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>О нашей семье</h3>
+                    <p>Continental FamQ - это больше чем просто группировка в мире GTA 5 RolePlay. Мы строим настоящую семью, где каждый участник важен и ценен. Наша цель - создать дружелюбное сообщество, где каждый сможет найти свое место и развиваться вместе с нами.</p>
+                    <p>Мы ценим качественный RolePlay, взаимовыручку и уважение друг к другу. В нашей семье нет места токсичности и нарушению правил сервера.</p>
+                </div>
+                
+                <div class="info-stats">
+                    <div class="stat-item">
+                        <div class="number" id="membersCount">50</div>
+                        <div class="label">Активных участников</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="number" id="blacklistCount">0</div>
+                        <div class="label">В черном списке</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="number">2024</div>
+                        <div class="label">Год основания</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="number">100%</div>
+                        <div class="label">Активность</div>
+                    </div>
+                </div>
+                
+                <!-- Developer карточка -->
+                <div class="founder-card">
+                    <div class="leadership-card developer">
+                        <div class="leadership-role">Developer</div>
+                        <h4 class="leadership-name">Exxy</h4>
+                        <div class="leadership-details">
+                            <span><strong>Discord:</strong> exxy66</span>
+                        </div>
+                        <a href="https://discord.com/users/exxy66" target="_blank" class="discord-btn">
+                            <i class="fab fa-discord"></i> Перейти в профиль
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Иерархия старшего состава -->
+                <div class="hierarchy-section">
+                    <h3 class="hierarchy-title">🏆 Иерархия старшего состава</h3>
+                    
+                    <div class="hierarchy-container">
+                        <!-- Уровень 1: Основатель -->
+                        <div class="hierarchy-level founder-level">
+                            <div class="leadership-card founder">
+                                <div class="leadership-role">Founder</div>
+                                <h4 class="leadership-name">Mikhail</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Mikhail</span>
+                                    <span><strong>Discord:</strong> mishasilwed</span>
+                                </div>
+                                <a href="https://discord.com/users/mishasilwed" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Уровень 2: Лидер -->
+                        <div class="hierarchy-level leaders-level">
+                            <div class="leadership-card leader">
+                                <div class="leadership-role">Leader</div>
+                                <h4 class="leadership-name">Adam</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Adam</span>
+                                    <span><strong>Discord:</strong> bilalchef</span>
+                                </div>
+                                <a href="https://discord.com/users/bilalchef" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Уровень 3: Заместители -->
+                        <div class="hierarchy-level deputies-level">
+                            <div class="leadership-card dep-leader">
+                                <div class="leadership-role">Dep. Leader</div>
+                                <h4 class="leadership-name">George</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> George</span>
+                                    <span><strong>Discord:</strong> georgiyvg</span>
+                                </div>
+                                <a href="https://discord.com/users/georgiyvg" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                            
+                            <div class="leadership-card dep-leader">
+                                <div class="leadership-role">Dep. Leader</div>
+                                <h4 class="leadership-name">Ramzan</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Ramzan</span>
+                                    <span><strong>Discord:</strong> stranger2770</span>
+                                </div>
+                                <a href="https://discord.com/users/stranger2770" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                            
+                            <div class="leadership-card dep-leader">
+                                <div class="leadership-role">Dep. Leader</div>
+                                <h4 class="leadership-name">Rafal</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Rafal</span>
+                                    <span><strong>Discord:</strong> f16adf</span>
+                                </div>
+                                <a href="https://discord.com/users/f16adf" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Уровень 4: Кураторы -->
+                        <div class="hierarchy-level curators-level">
+                            <div class="leadership-card curator">
+                                <div class="leadership-role">Curator</div>
+                                <h4 class="leadership-name">Coden</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Coden</span>
+                                    <span><strong>Discord:</strong> exxy66</span>
+                                </div>
+                                <a href="https://discord.com/users/exxy66" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                            
+                            <div class="leadership-card curator">
+                                <div class="leadership-role">Curator</div>
+                                <h4 class="leadership-name">Ramzyi</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Ramzyi</span>
+                                    <span><strong>Discord:</strong> kann_sein</span>
+                                </div>
+                                <a href="https://discord.com/users/kann_sein" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                            
+                            <div class="leadership-card curator">
+                                <div class="leadership-role">Curator</div>
+                                <h4 class="leadership-name">Hell</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Hell</span>
+                                    <span><strong>Discord:</strong> sayfer228</span>
+                                </div>
+                                <a href="https://discord.com/users/sayfer228" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                            
+                            <div class="leadership-card curator">
+                                <div class="leadership-role">Curator</div>
+                                <h4 class="leadership-name">Omarion</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Omarion</span>
+                                    <span><strong>Discord:</strong> omarion001</span>
+                                </div>
+                                <a href="https://discord.com/users/omarion001" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                            
+                            <div class="leadership-card curator">
+                                <div class="leadership-role">Curator</div>
+                                <h4 class="leadership-name">Teezo</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Teezo</span>
+                                    <span><strong>Discord:</strong> teezo0</span>
+                                </div>
+                                <a href="https://discord.com/users/teezo0" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                            
+                            <div class="leadership-card curator">
+                                <div class="leadership-role">Curator</div>
+                                <h4 class="leadership-name">Maga</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Maga</span>
+                                    <span><strong>Discord:</strong> nyavushka</span>
+                                </div>
+                                <a href="https://discord.com/users/nyavushka" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                            
+                            <div class="leadership-card curator">
+                                <div class="leadership-role">Curator</div>
+                                <h4 class="leadership-name">Seiju</h4>
+                                <div class="leadership-details">
+                                    <span><strong>Имя в GTA 5 RP:</strong> Seiju</span>
+                                    <span><strong>Discord:</strong> dreaddim123</span>
+                                </div>
+                                <a href="https://discord.com/users/dreaddim123" target="_blank" class="discord-btn">
+                                    <i class="fab fa-discord"></i> Перейти в профиль
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <footer class="footer">
+        <p>Continental FamQ © 2026</p>
+        <p>По всем вопросам: <span id="discordLink">discord.gg/d2WtFWd8nS</span></p>
+    </footer>
+
+    <script>
+        // === КОНФИГУРАЦИЯ ===
+        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1462181075941064858/Od-F83SOM_Z9yjMsKNoLRR8JHRTFfwiPLWsZKC6NTWmHzvHh6SORJS-398Ald8kr4Q-8';
+        const FAMILY_NAME = 'Continental FamQ';
+        const RECRUIT_ROLE_ID = '1454529874973687904';
+        
+        // === ПАРОЛИ ДЛЯ ЧЕРНОГО СПИСКА ===
+        // 5 паролей для удаления отдельных записей из ЧС
+        const INDIVIDUAL_REMOVAL_PASSWORDS = [
+            "F@m1ly_Cl34n_2024!",
+            "Bl4ckL1st_Fr33_#X7p",
+            "M1kh41l_Ad4m_Unb4n!",
+            "S3rv3r_F4m1ly_S3cur3@",
+            "V1p_C14n_R3m0v3_$$"
+        ];
+        
+        // Уникальный сложный пароль для очистки всего ЧС
+        const CLEAR_ALL_PASSWORD = "Main_Total_Clear_P@ssw0rd_2024";
+        
+        // Пароли для добавления в ЧС (20 штук)
+        const BLACKLIST_PASSWORDS = [
+            "QuantumSecure@2026#FamQ",
+            "Continental$MasterKey789!",
+            "FamQProtector_UltraSecure123",
+            "BlackListAccess#QuantumEncrypt",
+            "FamilyGuardian$Supreme2026",
+            "SecureEntry@MegaPass987",
+            "FamQAdmin#CryptoLock456",
+            "ContinentalSecurity$TopLevel",
+            "BlackAccess!HyperSecure321",
+            "FamQShield@CyberLock789",
+            "MasterKey2026#QuantumSafe",
+            "UltraProtect$FamQSystem",
+            "SecureGate@Continental777",
+            "AdminAccess#MegaSecure999",
+            "FamQLock$Quantum2026",
+            "SystemGuard@HyperAccess",
+            "BlackListMaster#UltraKey",
+            "ContinentalProtect$Crypto2026",
+            "FamQSecure@MegaGuard456",
+            "QuantumLock$AdminAccess789"
+        ];
+        
+        // === КОНЕЦ КОНФИГУРАЦИИ ===
+
+        // Хранилище для черного списка
+        let blacklistData = [];
+        let currentAction = null;
+        let currentEntryId = null;
+
+        // Инициализация хранилища
+        function initBlacklistStorage() {
+            const savedData = localStorage.getItem('familyBlacklist');
+            if (savedData) {
+                try {
+                    blacklistData = JSON.parse(savedData);
+                } catch (e) {
+                    blacklistData = [];
+                    localStorage.removeItem('familyBlacklist');
+                }
+            }
+        }
+
+        // Функция для перехода на страницу подачи заявки
+        function goToApplication() {
+            navigateToPage('join');
+        }
+
+        // Навигация между страницами
+        function initNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const navLinksContainer = document.getElementById('navLinks');
+            
+            // Переключение страниц
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetPage = this.getAttribute('data-page');
+                    navigateToPage(targetPage);
+                    
+                    // Закрываем мобильное меню если открыто
+                    if (window.innerWidth <= 768) {
+                        navLinksContainer.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Мобильное меню
+            mobileMenuBtn.addEventListener('click', function() {
+                navLinksContainer.classList.toggle('active');
+            });
+            
+            // Обработка хэша в URL
+            function handleHashChange() {
+                const hash = window.location.hash.substring(1) || 'home';
+                navigateToPage(hash);
+            }
+            
+            // Инициализация по хэшу
+            handleHashChange();
+            
+            // Слушаем изменения хэша
+            window.addEventListener('hashchange', handleHashChange);
+        }
+
+        // Функция навигации по страницам
+        function navigateToPage(targetPage) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+            
+            // Обновляем активные классы
+            navLinks.forEach(l => l.classList.remove('active'));
+            document.querySelector(`.nav-link[data-page="${targetPage}"]`)?.classList.add('active');
+            
+            pages.forEach(page => {
+                page.classList.remove('active');
+                if (page.id === targetPage) {
+                    page.classList.add('active');
+                }
+            });
+            
+            // Прокручиваем к началу страницы
+            window.scrollTo(0, 0);
+            
+            // Обновляем статистику на странице инфо
+            if (targetPage === 'info') {
+                updateInfoStats();
+            }
+            
+            // Обновляем черный список
+            if (targetPage === 'blacklist') {
+                updateBlacklistDisplay();
+            }
+        }
+
+        // Создание снежинок
+        function createSnowflakes() {
+            const snowflakesContainer = document.getElementById('snowflakes');
+            const snowflakeCount = 50;
+            
+            for (let i = 0; i < snowflakeCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.classList.add('snowflake');
+                snowflake.innerHTML = '❄';
+                
+                const size = Math.random() * 20 + 10;
+                const startX = Math.random() * 100;
+                const duration = Math.random() * 20 + 20;
+                const delay = Math.random() * 20;
+                const opacity = Math.random() * 0.7 + 0.3;
+                
+                snowflake.style.fontSize = `${size}px`;
+                snowflake.style.left = `${startX}%`;
+                snowflake.style.animationDuration = `${duration}s`;
+                snowflake.style.animationDelay = `${delay}s`;
+                snowflake.style.opacity = opacity;
+                
+                snowflakesContainer.appendChild(snowflake);
+            }
+        }
+
+        // Показать уведомление
+        function showNotification(type, message) {
+            const oldNotification = document.querySelector('.notification');
+            if (oldNotification) {
+                oldNotification.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-exclamation-triangle'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="notification-close"><i class="fas fa-times"></i></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Автоматическое скрытие
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 5000);
+            
+            // Закрытие по клику
+            notification.querySelector('.notification-close').addEventListener('click', () => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            });
+        }
+
+        // Показать модальное окно подтверждения
+        function showConfirmModal(title, message, action, requirePassword = false, entryId = null) {
+            currentAction = action;
+            currentEntryId = entryId;
+            
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            
+            const passwordContainer = document.getElementById('passwordInputContainer');
+            const passwordInput = document.getElementById('confirmPassword');
+            
+            if (requirePassword) {
+                passwordContainer.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+            } else {
+                passwordContainer.style.display = 'none';
+            }
+            
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        // Закрыть модальное окно
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+            currentAction = null;
+            currentEntryId = null;
+            document.getElementById('confirmPassword').value = '';
+        }
+
+        // Валидация формы заявки (ИСПРАВЛЕНА - теперь минимум 1 символ)
+        function validateForm(formData) {
+            const errors = [];
+            
+            if (!formData.nickname || formData.nickname.length < 1) {
+                errors.push('Игровой никнейм должен содержать минимум 1 символ');
+            }
+            
+            if (!formData.age || formData.age < 10) {
+                errors.push('Возраст должен быть от 10 лет');
+            }
+            
+            if (!formData.discord_id || !formData.discord_id.match(/^\d{17,20}$/)) {
+                errors.push('Discord ID должен содержать 17-20 цифр');
+            }
+            
+            if (!formData.hours_per_day || formData.hours_per_day < 0) {
+                errors.push('Укажите корректное количество часов онлайн в день');
+            }
+            
+            if (!formData.total_hours || formData.total_hours < 0) {
+                errors.push('Укажите корректное общее количество часов в GTA 5 RP');
+            }
+            
+            if (!formData.motivation || formData.motivation.length < 1) {
+                errors.push('Напишите мотивацию (минимум 1 символ)');
+            }
+            
+            if (!formData.timezone) {
+                errors.push('Выберите часовой пояс');
+            }
+            
+            return errors;
+        }
+
+        // Валидация формы черного списка (ИСПРАВЛЕНА - теперь минимум 1 символ)
+        function validateBlacklistForm(formData) {
+            const errors = [];
+            
+            if (!formData.blacklist_password || formData.blacklist_password.length < 1) {
+                errors.push('Введите персональный пароль');
+            }
+            
+            if (!formData.blacklist_nickname || formData.blacklist_nickname.length < 1) {
+                errors.push('Никнейм должен содержать минимум 1 символ');
+            }
+            
+            if (!formData.blacklist_discord_id || !formData.blacklist_discord_id.match(/^\d{17,20}$/)) {
+                errors.push('Discord ID должен содержать 17-20 цифр');
+            }
+            
+            if (!formData.blacklist_reason || formData.blacklist_reason.length < 1) {
+                errors.push('Опишите причину внесения в черный список (минимум 1 символ)');
+            }
+            
+            return errors;
+        }
+
+        // Проверка пароля для добавления в черный список
+        function validateBlacklistAddPassword(password) {
+            return BLACKLIST_PASSWORDS.includes(password);
+        }
+
+        // Проверка пароля для удаления отдельной записи
+        function validateIndividualRemovalPassword(password) {
+            return INDIVIDUAL_REMOVAL_PASSWORDS.includes(password);
+        }
+
+        // Проверка пароля для очистки всего ЧС
+        function validateClearAllPassword(password) {
+            return password === CLEAR_ALL_PASSWORD;
+        }
+
+        // Генерация ID для черного списка
+        function generateBlacklistId() {
+            const nextId = blacklistData.length + 1;
+            return `BL-${nextId.toString().padStart(2, '0')}`;
+        }
+
+        // Поиск записи по ID черного списка
+        function findBlacklistEntryById(blacklistId) {
+            return blacklistData.find(entry => entry.blacklistId === blacklistId);
+        }
+
+        // Удаление записи по ID
+        function removeBlacklistEntryById(blacklistId) {
+            const initialLength = blacklistData.length;
+            blacklistData = blacklistData.filter(entry => entry.blacklistId !== blacklistId);
+            
+            if (blacklistData.length < initialLength) {
+                localStorage.setItem('familyBlacklist', JSON.stringify(blacklistData));
+                return true;
+            }
+            return false;
+        }
+
+        // Очистка всего черного списка
+        function clearAllBlacklist() {
+            blacklistData = [];
+            localStorage.setItem('familyBlacklist', JSON.stringify(blacklistData));
+            return true;
+        }
+
+        // Отправка заявки в Discord
+        async function sendToDiscord(formData) {
+            try {
+                const content = `<@&${RECRUIT_ROLE_ID}> | <@${formData.discord_id}>`;
+                
+                const embed = {
+                    title: `Новая заявка в Continental FamQ`,
+                    color: 15158332,
+                    timestamp: new Date().toISOString(),
+                    fields: [
+                        {
+                            name: "Основная информация",
+                            value: `**Игровой ник:** ${formData.nickname}\n**Возраст:** ${formData.age}\n**Discord ID:** ${formData.discord_id}`,
+                            inline: false
+                        },
+                        {
+                            name: "Игровая активность",
+                            value: `**Онлайн (часов в день):** ${formData.hours_per_day}\n**Всего часов в GTA 5 RP:** ${formData.total_hours}\n**Часовой пояс:** ${getTimezoneLabel(formData.timezone)}`,
+                            inline: false
+                        },
+                        {
+                            name: "Почему вы хотите вступить в нашу семью?",
+                            value: `${formData.motivation.substring(0, 1024)}${formData.motivation.length > 1024 ? '...' : ''}`,
+                            inline: false
+                        }
+                    ],
+                    footer: {
+                        text: `Заявка отправлена через сайт Continental FamQ`
+                    }
+                };
+
+                if (formData.previousFamilies && formData.previousFamilies.trim()) {
+                    embed.fields.push({
+                        name: "Предыдущие семьи/организации",
+                        value: `${formData.previousFamilies.substring(0, 1024)}${formData.previousFamilies.length > 1024 ? '...' : ''}`,
+                        inline: false
+                    });
+                }
+
+                const discordData = {
+                    username: `Continental FamQ Заявки`,
+                    avatar_url: "https://cdn.discordapp.com/embed/avatars/0.png",
+                    content: content,
+                    embeds: [embed]
+                };
+
+                const response = await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(discordData)
+                });
+
+                return response.ok;
+                
+            } catch (error) {
+                console.error('Ошибка отправки в Discord:', error);
+                return false;
+            }
+        }
+
+        // Добавление в черный список
+        function addToBlacklist(formData) {
+            const blacklistId = generateBlacklistId();
+            const newEntry = {
+                id: Date.now(),
+                blacklistId: blacklistId,
+                nickname: formData.blacklist_nickname,
+                discord_id: formData.blacklist_discord_id,
+                reason: formData.blacklist_reason,
+                date: new Date().toISOString(),
+                addedBy: 'Система'
+            };
+            
+            blacklistData.push(newEntry);
+            localStorage.setItem('familyBlacklist', JSON.stringify(blacklistData));
+            
+            return true;
+        }
+
+        // Обновление отображения черного списка
+        function updateBlacklistDisplay() {
+            const blacklistList = document.getElementById('blacklistList');
+            
+            if (!blacklistList) return;
+            
+            if (blacklistData.length === 0) {
+                blacklistList.innerHTML = `
+                    <div class="blacklist-empty">
+                        <i class="fas fa-ban"></i>
+                        <p>Черный список пуст</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">Здесь будут отображаться игроки, внесенные в черный список</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<ul class="blacklist-list">';
+            
+            blacklistData.forEach(entry => {
+                const date = new Date(entry.date);
+                const formattedDate = date.toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                html += `
+                    <li class="blacklist-item">
+                        <div class="blacklist-item-header">
+                            <div>
+                                <span class="blacklist-item-id">${escapeHtml(entry.blacklistId)}</span>
+                                <span class="blacklist-item-nickname">${escapeHtml(entry.nickname)}</span>
+                            </div>
+                            <div class="blacklist-item-discord">ID: ${entry.discord_id}</div>
+                        </div>
+                        <div class="blacklist-item-reason">
+                            <strong>Причина:</strong> ${escapeHtml(entry.reason)}
+                        </div>
+                        <div class="blacklist-item-actions">
+                            <button class="submit-btn danger" style="padding: 8px 15px; font-size: 0.9rem;" onclick="showDeleteConfirm('${entry.blacklistId}', '${escapeHtml(entry.nickname)}')">
+                                <i class="fas fa-trash"></i> Удалить отдельно
+                            </button>
+                        </div>
+                        <div class="blacklist-item-date">
+                            Добавлено: ${formattedDate}
+                        </div>
+                    </li>
+                `;
+            });
+            
+            html += '</ul>';
+            blacklistList.innerHTML = html;
+        }
+
+        // Обновление статистики на странице инфо
+        function updateInfoStats() {
+            const blacklistCount = document.getElementById('blacklistCount');
+            if (blacklistCount) {
+                blacklistCount.textContent = blacklistData.length;
+            }
+        }
+
+        // Экранирование HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Перевод значения часового пояса в текст
+        function getTimezoneLabel(value) {
+            const timezones = {
+                'msk': 'MSK (Москва)',
+                'eet': 'EET (Киев, Минск)',
+                'cet': 'CET (Европа)',
+                'other': 'Другой'
+            };
+            return timezones[value] || value;
+        }
+
+        // Показать подтверждение удаления записи
+        function showDeleteConfirm(entryId, nickname) {
+            showConfirmModal(
+                'Удаление из черного списка',
+                `Вы уверены, что хотите удалить игрока "${nickname}" (ID: ${entryId}) из черного списка?<br><br><strong>Используйте один из 5 паролей для удаления отдельных записей.</strong>`,
+                'delete_entry',
+                true,
+                entryId
+            );
+        }
+
+        // Обработка отправки формы заявки
+        function initApplicationForm() {
+            const applicationForm = document.getElementById('applicationForm');
+            if (!applicationForm) return;
+            
+            applicationForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    nickname: document.getElementById('nickname').value.trim(),
+                    age: document.getElementById('age').value.trim(),
+                    discord_id: document.getElementById('discord_id').value.trim(),
+                    hours_per_day: document.getElementById('hours_per_day').value.trim(),
+                    total_hours: document.getElementById('total_hours').value.trim(),
+                    motivation: document.getElementById('motivation').value.trim(),
+                    previousFamilies: document.getElementById('previousFamilies').value.trim(),
+                    timezone: document.getElementById('timezone').value
+                };
+                
+                const errors = validateForm(formData);
+                if (errors.length > 0) {
+                    showNotification('error', errors.join('<br>'));
+                    return;
+                }
+                
+                const submitBtn = document.getElementById('submitBtn');
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Отправка в Discord...';
+                submitBtn.style.opacity = '0.7';
+                
+                const success = await sendToDiscord(formData);
+                
+                if (success) {
+                    submitBtn.textContent = '✅ Отправлено!';
+                    submitBtn.style.backgroundColor = '#2ecc71';
+                    showNotification('success', 'Заявка отправлена в Discord! Роль recruit и вы будете упомянуты. Мы свяжемся с вами в течение 48 часов.');
+                    
+                    setTimeout(() => {
+                        this.reset();
+                        submitBtn.textContent = originalText;
+                        submitBtn.style.backgroundColor = '';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 3000);
+                    
+                } else {
+                    submitBtn.textContent = '❌ Ошибка';
+                    submitBtn.style.backgroundColor = '#e74c3c';
+                    showNotification('error', 'Ошибка отправки. Пожалуйста, свяжитесь с нами напрямую в Discord.');
+                    
+                    setTimeout(() => {
+                        submitBtn.textContent = 'Повторить отправку';
+                        submitBtn.style.backgroundColor = '';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 3000);
+                }
+            });
+        }
+
+        // Обработка отправки формы черного списка
+        function initBlacklistForm() {
+            const blacklistForm = document.getElementById('blacklistForm');
+            if (!blacklistForm) return;
+            
+            blacklistForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    blacklist_password: document.getElementById('blacklist_password').value.trim(),
+                    blacklist_nickname: document.getElementById('blacklist_nickname').value.trim(),
+                    blacklist_discord_id: document.getElementById('blacklist_discord_id').value.trim(),
+                    blacklist_reason: document.getElementById('blacklist_reason').value.trim()
+                };
+                
+                const errors = validateBlacklistForm(formData);
+                if (errors.length > 0) {
+                    showNotification('error', errors.join('<br>'));
+                    return;
+                }
+                
+                // Проверка пароля
+                if (!validateBlacklistAddPassword(formData.blacklist_password)) {
+                    showNotification('error', 'Неверный пароль! Доступ запрещен.');
+                    return;
+                }
+                
+                const submitBtn = document.getElementById('blacklistSubmitBtn');
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Добавление...';
+                submitBtn.style.opacity = '0.7';
+                
+                // Добавляем в черный список
+                const success = addToBlacklist(formData);
+                
+                if (success) {
+                    submitBtn.textContent = '✅ Добавлено!';
+                    submitBtn.style.backgroundColor = '#2ecc71';
+                    showNotification('success', 'Игрок успешно добавлен в черный список!');
+                    
+                    // Очищаем форму
+                    blacklistForm.reset();
+                    
+                    // Обновляем отображение
+                    updateBlacklistDisplay();
+                    updateInfoStats();
+                    
+                    setTimeout(() => {
+                        submitBtn.textContent = originalText;
+                        submitBtn.style.backgroundColor = '';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 3000);
+                    
+                } else {
+                    submitBtn.textContent = '❌ Ошибка';
+                    submitBtn.style.backgroundColor = '#e74c3c';
+                    showNotification('error', 'Ошибка при добавлении в черный список.');
+                    
+                    setTimeout(() => {
+                        submitBtn.textContent = 'Повторить попытку';
+                        submitBtn.style.backgroundColor = '';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 3000);
+                }
+            });
+        }
+
+        // Инициализация кнопки очистки всего ЧС
+        function initClearAllButton() {
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            if (!clearAllBtn) return;
+            
+            clearAllBtn.addEventListener('click', function() {
+                if (blacklistData.length === 0) {
+                    showNotification('warning', 'Черный список уже пуст!');
+                    return;
+                }
+                
+                showConfirmModal(
+                    'Очистка всего черного списка',
+                    `Вы уверены, что хотите очистить ВЕСЬ черный список? Это удалит всех ${blacklistData.length} игроков. Используйте главный пароль для очистки всего ЧС`,
+                    'clear_all',
+                    true
+                );
+            });
+        }
+
+        // Инициализация модального окна
+        function initModal() {
+            const modalOverlay = document.getElementById('confirmModal');
+            const modalClose = document.getElementById('modalClose');
+            const modalCancel = document.getElementById('modalCancel');
+            const modalConfirm = document.getElementById('modalConfirm');
+            
+            // Закрытие модального окна
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeConfirmModal();
+                }
+            });
+            
+            modalClose.addEventListener('click', closeConfirmModal);
+            modalCancel.addEventListener('click', closeConfirmModal);
+            
+            // Подтверждение действия
+            modalConfirm.addEventListener('click', function() {
+                const passwordInput = document.getElementById('confirmPassword');
+                const password = passwordInput.value.trim();
+                
+                if (!currentAction) {
+                    closeConfirmModal();
+                    return;
+                }
+                
+                if (currentAction === 'delete_entry') {
+                    // Для удаления отдельных записей используем INDIVIDUAL_REMOVAL_PASSWORDS
+                    if (!validateIndividualRemovalPassword(password)) {
+                        showNotification('error', 'Неверный пароль! Используйте один из 5 паролей для удаления отдельных записей.');
+                        return;
+                    }
+                    
+                    // Удаляем запись
+                    if (removeBlacklistEntryById(currentEntryId)) {
+                        showNotification('success', 'Игрок успешно удален из черного списка!');
+                        updateBlacklistDisplay();
+                        updateInfoStats();
+                    } else {
+                        showNotification('error', 'Ошибка при удалении из черного списка.');
+                    }
+                    
+                } else if (currentAction === 'clear_all') {
+                    // Для очистки всего ЧС используем CLEAR_ALL_PASSWORD
+                    if (!validateClearAllPassword(password)) {
+                        showNotification('error', 'Неверный пароль! Используйте главный пароль для очистки всего ЧС.');
+                        return;
+                    }
+                    
+                    // Очищаем весь черный список
+                    if (clearAllBlacklist()) {
+                        showNotification('success', 'Весь черный список успешно очищен!');
+                        updateBlacklistDisplay();
+                        updateInfoStats();
+                    } else {
+                        showNotification('error', 'Ошибка при очистке черного списка.');
+                    }
+                }
+                
+                closeConfirmModal();
+            });
+            
+            // Обработка нажатия Enter в поле пароля
+            document.getElementById('confirmPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    modalConfirm.click();
+                }
+            });
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализируем хранилище черного списка
+            initBlacklistStorage();
+            
+            createSnowflakes();
+            initNavigation();
+            initApplicationForm();
+            initBlacklistForm();
+            initClearAllButton();
+            initModal();
+            
+            // Инициализируем отображение черного списка
+            updateBlacklistDisplay();
+            updateInfoStats();
+            
+            // Анимация для элементов при прокрутке
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.criterion, .feature-card, .media-item, .stat-item, .leadership-card').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.5s, transform 0.5s';
+                observer.observe(el);
+            });
+            
+            if (DISCORD_WEBHOOK_URL.includes('ВАШ_ID')) {
+                console.warn('⚠️ ВНИМАНИЕ: Не забудьте заменить DISCORD_WEBHOOK_URL на ваш реальный webhook!');
+                showNotification('error', 'Настройте Discord Webhook URL в коде (строка 345)');
+            }
+            
+            console.log(`${FAMILY_NAME} - Сайт запущен`);
+            
+            // Выводим пароли в консоль для удобства
+            console.log('=== 5 ПАРОЛЕЙ ДЛЯ УДАЛЕНИЯ ОТДЕЛЬНЫХ ЗАПИСЕЙ ИЗ ЧС ===');
+            INDIVIDUAL_REMOVAL_PASSWORDS.forEach((password, index) => {
+                console.log(`${index + 1}. ${password}`);
+            });
+            console.log('\n=== ГЛАВНЫЙ ПАРОЛЬ ДЛЯ ОЧИСТКИ ВСЕГО ЧС ===');
+            console.log(CLEAR_ALL_PASSWORD);
+            console.log('\n=== ПАРОЛИ ДЛЯ ДОБАВЛЕНИЯ В ЧС (20 штук) ===');
+            BLACKLIST_PASSWORDS.forEach((password, index) => {
+                if (index < 5) console.log(`${index + 1}. ${password}`);
+            });
+            console.log('... и ещё 15 паролей (см. код)');
+            console.log('\n=====================================================');
+        });
+
+        // Анимация снежинок
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                0% {
+                    transform: translateY(-100px) rotate(0deg);
+                    opacity: 0.8;
+                }
+                100% {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+            
+            .snowflake {
+                animation-name: fall;
+                animation-timing-function: linear;
+                animation-iteration-count: infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
