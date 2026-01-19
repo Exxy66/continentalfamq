@@ -7,75 +7,255 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
  <script>
-// ============ РАБОЧИЙ API КЛИЕНТ ============
-const API_URL = 'https://script.google.com/macros/s/AKfycbxaZwLlO2_pS0nRFPaFK9rByfPNJe3YTSaj2HJbtlY4UdLRz-61BzYMN6psV2nvXw44/exec';
+// ============ НОВЫЙ РАБОЧИЙ КОД ============
+const API_URL = 'https://script.google.com/macros/s/AKfycbwRL6JryXgOOZTschZKdvyrSX4OKwHa4f7R9qolkws0MRy7H75QQrBE3e_qG-RcoumP/exec';
 
-// Простой тест
-async function testConnection() {
-  console.log('🔧 Тестируем подключение...');
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('🚀 Continental FamQ загружен');
   
-  // Вариант 1: GET запрос
-  try {
-    const response = await fetch(`${API_URL}?action=test`);
-    const data = await response.json();
-    console.log('✅ Ответ от API:', data);
-    alert('✅ API работает: ' + data.message);
-    return true;
-  } catch (error) {
-    console.error('❌ Ошибка:', error);
-    
-    // Вариант 2: Через FormData
-    try {
-      const formData = new FormData();
-      formData.append('action', 'test');
-      
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        body: formData,
-        mode: 'no-cors'
-      });
-      
-      alert('🔄 Отправлен POST запрос (проверь консоль Google Apps Script)');
-      return true;
-    } catch (error2) {
-      console.error('❌ И это не работает:', error2);
-      alert('❌ Не удалось подключиться к API');
-      return false;
-    }
-  }
-}
-
-// Инициализация сайта
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 Continental FamQ запущен');
-  
-  // Показываем что сайт работает
+  // 1. Показываем что сайт работает
   document.body.innerHTML += `
-    <div style="position: fixed; bottom: 10px; right: 10px; background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
+    <div id="status" style="
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: #4CAF50;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 10000;
+    ">
       ✅ Сайт загружен
     </div>
   `;
   
-  // Тестируем через 2 секунды
+  // 2. Используем ПРОСТОЙ GET запрос (без CORS проблем)
   setTimeout(() => {
-    testConnection();
-  }, 2000);
+    testSimpleConnection();
+  }, 1000);
 });
 
-// Экспортируем функции
-window.db = {
-  test: testConnection,
+// ============ ПРОСТОЙ ТЕСТ ============
+async function testSimpleConnection() {
+  const statusDiv = document.getElementById('status');
   
-  async getAll() {
-    try {
-      const response = await fetch(`${API_URL}?action=getAll`);
-      return await response.json();
-    } catch (error) {
-      console.error('Ошибка:', error);
-      return {success: false, error: error.message};
+  // Вариант 1: Прямой GET запрос с параметрами в URL
+  try {
+    statusDiv.innerHTML = '🔗 Тестируем подключение...';
+    statusDiv.style.background = '#2196F3';
+    
+    // ЭТО САМЫЙ ПРОСТОЙ СПОСОБ!
+    const testUrl = `${API_URL}?action=test&_=${Date.now()}`;
+    console.log('🔧 Запрос к:', testUrl);
+    
+    const response = await fetch(testUrl);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Успех:', data);
+      
+      statusDiv.innerHTML = `✅ ${data.message || 'API работает!'}`;
+      statusDiv.style.background = '#4CAF50';
+      
+      // Активируем кнопки
+      activateButtons();
+      
+    } else {
+      throw new Error(`HTTP ${response.status}`);
     }
+    
+  } catch (error) {
+    console.error('❌ Ошибка:', error);
+    
+    statusDiv.innerHTML = '🌐 Используем локальный режим';
+    statusDiv.style.background = '#FF9800';
+    
+    // Переходим в локальный режим
+    enableLocalMode();
   }
-};
+}
+
+// ============ АКТИВАЦИЯ КНОПОК ============
+function activateButtons() {
+  // Находим все кнопки и ссылки
+  const buttons = document.querySelectorAll('a, button, [href]');
+  
+  buttons.forEach(btn => {
+    // Убираем блокировку
+    btn.style.pointerEvents = 'auto';
+    btn.style.opacity = '1';
+    
+    // Для кнопки "ПОДАТЬ ЗАЯВКУ"
+    if (btn.textContent.includes('ПОДАТЬ') || btn.textContent.includes('ЗАЯВК')) {
+      btn.onclick = function(e) {
+        e.preventDefault();
+        showSimpleForm();
+      };
+    }
+    
+    // Для кнопки "DEVELOPER КОД"
+    if (btn.textContent.includes('DEVELOPER') || btn.textContent.includes('КОД')) {
+      btn.onclick = function(e) {
+        e.preventDefault();
+        const code = prompt('Введите developer код:');
+        if (code === 'CONTINENTAL2026') {
+          alert('✅ Доступ предоставлен!');
+        } else if (code) {
+          alert('❌ Неверный код');
+        }
+      };
+    }
+  });
+}
+
+// ============ ПРОСТАЯ ФОРМА ============
+function showSimpleForm() {
+  const formHTML = `
+    <div style="
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.3);
+      z-index: 99999;
+      width: 90%;
+      max-width: 500px;
+    ">
+      <h2 style="margin-top:0;">📝 Заявка в Continental FamQ</h2>
+      
+      <div style="margin: 15px 0;">
+        <input type="text" placeholder="Ваш ник в игре" id="nickname" style="width:100%;padding:10px;margin:5px 0;">
+      </div>
+      
+      <div style="margin: 15px 0;">
+        <input type="number" placeholder="Ваш возраст" id="age" style="width:100%;padding:10px;margin:5px 0;">
+      </div>
+      
+      <div style="margin: 15px 0;">
+        <input type="text" placeholder="Ваш Discord (name#1234)" id="discord" style="width:100%;padding:10px;margin:5px 0;">
+      </div>
+      
+      <div style="margin: 15px 0;">
+        <textarea placeholder="Почему хотите вступить?" id="motivation" style="width:100%;padding:10px;height:100px;margin:5px 0;"></textarea>
+      </div>
+      
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button onclick="submitApplication()" style="flex:1;padding:12px;background:#4CAF50;color:white;border:none;border-radius:5px;">
+          📤 Отправить
+        </button>
+        <button onclick="this.parentElement.parentElement.remove()" style="flex:1;padding:12px;background:#f44336;color:white;border:none;border-radius:5px;">
+          ❌ Отмена
+        </button>
+      </div>
+    </div>
+    
+    <div style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 99998;
+    "></div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', formHTML);
+}
+
+// ============ ОТПРАВКА ЗАЯВКИ ============
+async function submitApplication() {
+  const nickname = document.getElementById('nickname').value;
+  const age = document.getElementById('age').value;
+  const discord = document.getElementById('discord').value;
+  const motivation = document.getElementById('motivation').value;
+  
+  if (!nickname || !age || !discord) {
+    alert('⚠️ Заполните все обязательные поля!');
+    return;
+  }
+  
+  // Показываем статус
+  const statusDiv = document.getElementById('status');
+  statusDiv.innerHTML = '📤 Отправляем заявку...';
+  statusDiv.style.background = '#FF9800';
+  
+  try {
+    // Используем GET запрос для отправки (проще всего)
+    const submitUrl = `${API_URL}?action=add&sheet=applications&nickname=${encodeURIComponent(nickname)}&age=${age}&discord_id=${encodeURIComponent(discord)}&motivation=${encodeURIComponent(motivation)}&status=pending`;
+    
+    console.log('📤 Отправляем:', submitUrl);
+    
+    const response = await fetch(submitUrl);
+    const result = await response.json();
+    
+    console.log('📥 Ответ:', result);
+    
+    if (result.success) {
+      statusDiv.innerHTML = '✅ Заявка отправлена!';
+      statusDiv.style.background = '#4CAF50';
+      
+      // Закрываем форму
+      document.querySelector('div[style*="background: rgba(0,0,0,0.7)"]').remove();
+      document.querySelector('div[style*="transform: translate(-50%, -50%)"]').remove();
+      
+      alert('🎉 Ваша заявка отправлена! Ожидайте ответа в Discord.');
+      
+    } else {
+      throw new Error(result.error || 'Ошибка сервера');
+    }
+    
+  } catch (error) {
+    console.error('❌ Ошибка отправки:', error);
+    
+    // Сохраняем локально
+    saveLocalApplication({ nickname, age, discord, motivation });
+    
+    statusDiv.innerHTML = '💾 Заявка сохранена локально';
+    statusDiv.style.background = '#9C27B0';
+    
+    // Закрываем форму
+    document.querySelector('div[style*="background: rgba(0,0,0,0.7)"]').remove();
+    document.querySelector('div[style*="transform: translate(-50%, -50%)"]').remove();
+    
+    alert('⚠️ Заявка сохранена локально (API недоступен)');
+  }
+}
+
+// ============ ЛОКАЛЬНОЕ СОХРАНЕНИЕ ============
+function saveLocalApplication(data) {
+  const applications = JSON.parse(localStorage.getItem('famq_applications') || '[]');
+  applications.push({
+    ...data,
+    id: Date.now(),
+    date: new Date().toISOString(),
+    status: 'pending'
+  });
+  localStorage.setItem('famq_applications', JSON.stringify(applications));
+  console.log('💾 Локально сохранено:', applications.length, 'заявок');
+}
+
+// ============ ЛОКАЛЬНЫЙ РЕЖИМ ============
+function enableLocalMode() {
+  console.log('🌐 Активирован локальный режим');
+  
+  // Активируем кнопки
+  setTimeout(activateButtons, 500);
+  
+  // Меняем статус
+  const statusDiv = document.getElementById('status');
+  statusDiv.innerHTML = '🌐 Локальный режим';
+  statusDiv.style.background = '#9C27B0';
+  
+  // Сообщаем пользователю
+  setTimeout(() => {
+    alert('🌐 Включен локальный режим\nВаши заявки будут сохранены в браузере');
+  }, 1000);
+}
 </script>
     
     <style>
@@ -5051,5 +5231,6 @@ window.db = {
         document.head.appendChild(style);
         
     </script>
+
 </body>
 </html>
