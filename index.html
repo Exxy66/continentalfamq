@@ -4983,45 +4983,119 @@
     </script>
 
 <script>
-// ============ Continental FamQ - Minimal Version ============
-const API_URL = 'https://script.google.com/macros/s/AKfycbwIMZ_IIdrxaQKJJFBWpgIjYwISYgZwvyIiJ95qzQdgC2-pHcSEttwr5TSa4ydEuObz/exec';
+// ============ Continental FamQ - Final Working Version ============
+const API_URL = 'https://script.google.com/macros/s/AKfycbzzI3VVuihkOqOFMk8EkYCtEzePDE47VfTyD-grPBe6uxklnC1BDq-YjgyMN8j7fgRz/exec';
 
 // При загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('✅ Continental FamQ loaded');
+window.onload = function() {
+  console.log('🚀 Continental FamQ loaded');
   
-  // ТОЛЬКО убираем "Подтвердите действие"
-  setTimeout(removeConfirmationOnly, 300);
-});
+  // 1. Убираем "Подтвердите действие" если есть
+  setTimeout(cleanPage, 100);
+  
+  // 2. Настраиваем кнопки
+  setTimeout(setupButtons, 200);
+};
 
-// Убрать только текст подтверждения
-function removeConfirmationOnly() {
-  // Ищем и заменяем только текст, не трогаем структуру
-  const walker = document.createTreeWalker(
-    document.body,
-    NodeFilter.SHOW_TEXT,
-    null,
-    false
-  );
+// 1. Очистка страницы
+function cleanPage() {
+  // Просто заменяем текст, не трогая структуру
+  document.body.innerHTML = document.body.innerHTML
+    .replace(/Подтвердите действие на exxy66\.github\.io/g, '')
+    .replace(/Отправлен POST запрос.*проверь консоль Google Apps Script/g, '');
+}
+
+// 2. Настройка кнопок
+function setupButtons() {
+  // Находим кнопку "ПОДАТЬ ЗАЯВКУ"
+  const buttons = document.querySelectorAll('a, button, [href*="ЗАЯВК"], [href*="заявк"], [href*="ПОДАТЬ"]');
   
-  let node;
-  while (node = walker.nextNode()) {
-    if (node.textContent.includes('Подтвердите действие')) {
-      node.textContent = node.textContent
-        .replace('Подтвердите действие на exxy66.github.io', '')
-        .replace('Отправлен POST запрос', '')
-        .replace('проверь консоль Google Apps Script', '');
-    }
-  }
-  
-  // Убираем пустые параграфы
-  document.querySelectorAll('p, div').forEach(el => {
-    if (el.textContent.trim() === '' && !el.children.length) {
-      el.remove();
+  buttons.forEach(btn => {
+    const text = btn.textContent || btn.innerText || '';
+    
+    if (text.includes('ПОДАТЬ') || text.includes('ЗАЯВК')) {
+      btn.onclick = function(e) {
+        e.preventDefault();
+        submitApplication();
+      };
+      btn.style.cursor = 'pointer';
     }
   });
 }
-</script>
 
+// 3. Отправка заявки (РАБОЧИЙ СПОСОБ)
+async function submitApplication() {
+  // Простая форма
+  const nickname = prompt('🎮 Ваш ник в GTA:');
+  if (!nickname) return;
+  
+  const age = prompt('📅 Ваш возраст:') || '18';
+  const discord = prompt('💬 Ваш Discord (name#1234):') || '';
+  
+  if (!confirm(`Отправить заявку?\n\n🎮 Ник: ${nickname}\n📅 Возраст: ${age}\n💬 Discord: ${discord}`)) {
+    return;
+  }
+  
+  // Вариант 1: Используем JSONP для обхода CORS
+  try {
+    // Создаем тег script (JSONP)
+    const script = document.createElement('script');
+    const callbackName = 'handleResponse_' + Date.now();
+    
+    window[callbackName] = function(data) {
+      console.log('✅ Ответ API:', data);
+      if (data.success) {
+        alert('✅ Заявка отправлена!');
+      } else {
+        alert('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+      }
+      delete window[callbackName];
+    };
+    
+    // Формируем URL с JSONP
+    const url = `${API_URL}?action=add_app&nickname=${encodeURIComponent(nickname)}&age=${age}&discord=${encodeURIComponent(discord)}&callback=${callbackName}`;
+    script.src = url;
+    
+    document.head.appendChild(script);
+    
+  } catch (error) {
+    console.error('❌ Ошибка:', error);
+    
+    // Вариант 2: Сохраняем локально
+    saveLocalApplication(nickname, age, discord);
+    alert('💾 Заявка сохранена в браузере\n(API временно недоступен)');
+  }
+}
+
+// 4. Локальное сохранение
+function saveLocalApplication(nickname, age, discord) {
+  const apps = JSON.parse(localStorage.getItem('continental_apps') || '[]');
+  apps.push({
+    id: 'LOCAL_' + Date.now(),
+    nickname: nickname,
+    age: age,
+    discord: discord,
+    date: new Date().toISOString(),
+    status: 'pending'
+  });
+  localStorage.setItem('continental_apps', JSON.stringify(apps));
+  
+  console.log('💾 Сохранено заявок:', apps.length);
+}
+
+// 5. Функция для просмотра сохраненных заявок
+window.viewApplications = function() {
+  const apps = JSON.parse(localStorage.getItem('continental_apps') || '[]');
+  if (apps.length === 0) {
+    alert('📭 Нет сохраненных заявок');
+  } else {
+    const list = apps.map(app => 
+      `🎮 ${app.nickname} (${app.age} лет)\n💬 ${app.discord}\n📅 ${new Date(app.date).toLocaleDateString()}\n---`
+    ).join('\n');
+    
+    alert(`💾 Сохраненные заявки (${apps.length}):\n\n${list}`);
+  }
+};
+</script>
 </body>
 </html>
