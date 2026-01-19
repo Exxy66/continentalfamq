@@ -27,32 +27,41 @@ class SimpleFamilyDatabase {
     
     // ========== ОСНОВНЫЕ МЕТОДЫ ==========
     
-    // СТАЛО:
-async loadSheet(sheetName) {
+  async loadSheet(sheetName) {
     console.log(`Загрузка ${sheetName}...`);
     
     try {
-        const response = await fetch`https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tq=select%20*&sheet=${sheetName}&tqx=responseHandler:handleResponse`;
+        // 1. ПРАВИЛЬНЫЙ URL с обратными кавычками
+        const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+        
+        console.log('URL:', url); // для отладки
+        
+        // 2. ПРАВИЛЬНЫЙ fetch (без лишних аргументов)
+        const response = await fetch(url);
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
         }
         
-        const data = await response.text();
-        console.log(`✅ ${sheetName} загружены успешно`);
-        return this.parseCSV(data); // Важно! Преобразовать CSV в массив
+        const csvText = await response.text();
+        console.log(`${sheetName} загружены успешно. Длина: ${csvText.length} символов`);
+        
+        // 3. Преобразуем CSV в массив
+        return this.parseCSV(csvText);
         
     } catch (error) {
-        console.error(`❌ Не удалось загрузить ${sheetName}:`, error.message);
+        console.error(`Ошибка загрузки ${sheetName}:`, error.message);
         
-        // Пробуем загрузить из кеша (если эта логика нужна)
-        const cached = this.getFromCache ? this.getFromCache(sheetName) : [];
-        if (cached && cached.length > 0) {
-            console.log(`📂 Использую кеш для ${sheetName}: ${cached.length} записей`);
-            return cached;
+        // 4. Пробуем загрузить из кеша
+        if (this.getFromCache) {
+            const cached = this.getFromCache(sheetName);
+            if (cached && cached.length > 0) {
+                console.log(`Использую кеш для ${sheetName}: ${cached.length} записей`);
+                return cached;
+            }
         }
         
-        return []; // Возвращаем пустой массив
+        return [];
     }
 }
     
