@@ -1,13 +1,22 @@
 // ============================================
 // ПРОСТАЯ БАЗА ДАННЫХ ДЛЯ CONTINENTAL FAMQ
-// ГАРАНТИРОВАННОЕ СОХРАНЕНИЕ ДАННЫХ
+// РАБОТАЕТ ТОЛЬКО С GOOGLE ТАБЛИЦАМИ
 // ============================================
 
 class SimpleFamilyDatabase {
     constructor() {
         this.SPREADSHEET_ID = '1vqms_IesQDMRxFo1X4byq2f7fFKHtGDd5Q4pUPFD5gI';
+        this.sheets = {
+            users: 'Пользователи',
+            applications: 'Заявки',
+            blacklist: 'ЧерныйСписок',
+            news: 'Новости',
+            chat: 'Чат',
+            roles: 'Роли',
+            codes: 'КодыРолей'
+        };
         
-        // ДУБЛИРУЕМ данные везде для надёжности
+        // Основной источник данных - Google Sheets
         this.data = {
             users: [],
             applications: [],
@@ -27,234 +36,480 @@ class SimpleFamilyDatabase {
         this.roles = this.data.roles;
         this.codes = this.data.codes;
         
+        this.loaded = false;
         console.log('🚀 База данных инициализирована');
     }
     
-    // ========== ЗАГРУЗКА ==========
+    // ========== ОСНОВНЫЕ МЕТОДЫ ==========
     
+    /**
+     * Загружает данные из Google Таблиц
+     * @param {boolean} force - Принудительная перезагрузка
+     * @returns {Promise<Object>} Все данные
+     */
+    async load(force = false) {
+        if (this.loaded && !force) {
+            console.log('📦 Данные уже загружены, используем кэш');
+            return this.data;
+        }
+        
+        console.log('🔄 Загрузка данных из Google Таблиц...');
+        
+        try {
+            // Загружаем все таблицы параллельно
+            const promises = Object.entries(this.sheets).map(async ([key, sheetName]) => {
+                try {
+                    const data = await this.loadSheet(sheetName);
+                    this.data[key] = data;
+                    return { key, success: true, count: data.length };
+                } catch (error) {
+                    console.error(`❌ Ошибка загрузки ${sheetName}:`, error.message);
+                    return { key, success: false, error: error.message };
+                }
+            });
+            
+            const results = await Promise.allSettled(promises);
+            
+            // Обновляем свойства для совместимости
+            this.users = this.data.users;
+            this.applications = this.data.applications;
+            this.blacklist = this.data.blacklist;
+            this.news = this.data.news;
+            this.chat = this.data.chat;
+            this.roles = this.data.roles;
+            this.codes = this.data.codes;
+            
+            this.loaded = true;
+            
+            console.log('✅ Данные загружены:');
+            console.log('👥 Пользователи:', this.data.users.length);
+            console.log('📝 Заявки:', this.data.applications.length);
+            console.log('🚫 Черный список:', this.data.blacklist.length);
+            console.log('📰 Новости:', this.data.news.length);
+            console.log('💬 Чат:', this.data.chat.length);
+            console.log('🎭 Роли:', this.data.roles.length);
+            console.log('🔑 Коды:', this.data.codes.length);
+            
+            // Кэшируем в localStorage для быстрого доступа (ТОЛЬКО КЭШ!)
+            this.cacheToLocalStorage();
+            
+            // Находим текущего пользователя
+            this.findCurrentUser();
+            
+            return this.data;
+            
+        } catch (error) {
+            console.error('❌ Критическая ошибка загрузки:', error);
+            // Пробуем загрузить из кэша как запасной вариант
+            return this.loadFromCache();
+        }
+    }
+    
+    /**
+     * Загружает одну таблицу из Google Sheets
+     * @param {string} sheetName - Название листа
+     * @returns {Promise<Array>} Данные таблицы
+     */
     async loadSheet(sheetName) {
         try {
             const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
             
-            console.log(`📥 Загружаю ${sheetName}:`, url);
+            console.log(`📥 Загружаю "${sheetName}"...`);
             
             const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
             
             const csvText = await response.text();
-            console.log(`✅ ${sheetName}: ${csvText.length} символов`);
             
-            // СУПЕР-ПРОСТОЙ парсер
+            // Если таблица пустая или содержит только заголовки
+            if (!csvText.trim() || csvText.trim().split('\n').length <= 1) {
+                console.log(`📭 Таблица "${sheetName}" пуста`);
+                return [];
+            }
+            
+            // Парсим CSV
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
-            if (lines.length < 2) return [];
-            
-            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const headers = this.parseCSVLine(lines[0]);
             const data = [];
             
             for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                const values = this.parseCSVLine(lines[i]);
                 const item = {};
                 
                 headers.forEach((header, index) => {
-                    if (values[index] && values[index] !== '') {
-                        item[header] = values[index];
+                    if (values[index] !== undefined && values[index] !== '') {
+                        // Преобразуем значения
+                        let value = values[index];
+                        
+                        // Пытаемся парсить числа и булевы значения
+                        if (!isNaN(value) && value.trim() !== '') {
+                            value = Number(value);
+                        } else if (value.toLowerCase() === 'true') {
+                            value = true;
+                        } else if (value.toLowerCase() === 'false') {
+                            value = false;
+                        }
+                        
+                        item[header] = value;
                     }
                 });
                 
+                // Добавляем только если есть данные
                 if (Object.keys(item).length > 0) {
                     data.push(item);
                 }
             }
             
+            console.log(`✅ "${sheetName}": ${data.length} записей`);
             return data;
+            
         } catch (error) {
-            console.error(`❌ Ошибка ${sheetName}:`, error.message);
-            return [];
+            console.error(`❌ Ошибка загрузки "${sheetName}":`, error.message);
+            throw error;
         }
     }
     
-    // ========== СИНХРОНИЗАЦИЯ ==========
+    /**
+     * Парсит строку CSV с учетом кавычек
+     * @param {string} line - Строка CSV
+     * @returns {Array} Массив значений
+     */
+    parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+            
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    // Двойная кавычка внутри кавычек
+                    current += '"';
+                    i++; // Пропускаем следующую кавычку
+                } else {
+                    // Начало/конец кавычек
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                // Конец поля
+                result.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        
+        // Добавляем последнее поле
+        result.push(current);
+        
+        // Убираем пробелы и кавычки
+        return result.map(field => field.trim().replace(/^"|"$/g, ''));
+    }
     
-    async syncAllData() {
-        console.log('🔄 СИНХРОНИЗАЦИЯ ВСЕХ ДАННЫХ...');
+    // ========== ПОЛУЧЕНИЕ ДАННЫХ ==========
+    
+    /**
+     * Получает всех пользователей
+     * @returns {Promise<Array>} Массив пользователей
+     */
+    async getUsers() {
+        if (!this.loaded || this.data.users.length === 0) {
+            await this.load();
+        }
+        return this.data.users;
+    }
+    
+    /**
+     * Находит пользователя по ID или имени
+     * @param {string} id - Discord ID или username
+     * @returns {Promise<Object|null>} Пользователь или null
+     */
+    async getUserById(id) {
+        await this.getUsers();
         
-        // Загружаем ВСЕ таблицы
-        const results = await Promise.allSettled([
-            this.loadSheet('Пользователи'),
-            this.loadSheet('Заявки'),
-            this.loadSheet('ЧерныйСписок'),
-            this.loadSheet('Новости'),
-            this.loadSheet('Чат'),
-            this.loadSheet('Роли'),
-            this.loadSheet('КодыРолей')
-        ]);
-        
-        // Сохраняем ВО ВСЕ места
-        const [users, applications, blacklist, news, chat, roles, codes] = results.map(r => 
-            r.status === 'fulfilled' ? r.value : []
-        );
-        
-        // 1. В основной объект
-        this.data.users = users;
-        this.data.applications = applications;
-        this.data.blacklist = blacklist;
-        this.data.news = news;
-        this.data.chat = chat;
-        this.data.roles = roles;
-        this.data.codes = codes;
-        
-        // 2. В свойства для совместимости
-        this.users = users;
-        this.applications = applications;
-        this.blacklist = blacklist;
-        this.news = news;
-        this.chat = chat;
-        this.roles = roles;
-        this.codes = codes;
-        
-        // 3. В localStorage для надёжности
-        localStorage.setItem('db_users', JSON.stringify(users));
-        localStorage.setItem('db_codes', JSON.stringify(codes));
-        localStorage.setItem('db_roles', JSON.stringify(roles));
-        localStorage.setItem('db_last_sync', Date.now().toString());
-        
-        // 4. В глобальную переменную
-        window.famqData = this.data;
-        
-        console.log('📊 РЕЗУЛЬТАТЫ:');
-        console.log('👥 Пользователи:', users.length);
-        console.log('🎭 Роли:', roles.length);
-        console.log('🔑 Коды:', codes.length);
-        
-        // НАХОДИМ ТЕБЯ И СОХРАНЯЕМ
-        this.findAndSaveUser();
+        // Ищем по разным полям
+        return this.data.users.find(user => 
+            user.discordId === id ||
+            user.discordid === id ||
+            user.username === id ||
+            user.id === id
+        ) || null;
+    }
+    
+    /**
+     * Получает все роли
+     * @returns {Promise<Array>} Массив ролей
+     */
+    async getRoles() {
+        if (!this.loaded || this.data.roles.length === 0) {
+            await this.load();
+        }
+        return this.data.roles;
+    }
+    
+    /**
+     * Получает все коды ролей
+     * @returns {Promise<Array>} Массив кодов
+     */
+    async getRoleCodes() {
+        if (!this.loaded || this.data.codes.length === 0) {
+            await this.load();
+        }
+        return this.data.codes;
+    }
+    
+    /**
+     * Получает все заявки
+     * @returns {Promise<Array>} Массив заявок
+     */
+    async getApplications() {
+        if (!this.loaded || this.data.applications.length === 0) {
+            await this.load();
+        }
+        return this.data.applications;
+    }
+    
+    /**
+     * Получает все новости
+     * @returns {Promise<Array>} Массив новостей
+     */
+    async getNews() {
+        if (!this.loaded || this.data.news.length === 0) {
+            await this.load();
+        }
+        return this.data.news;
+    }
+    
+    /**
+     * Получает все сообщения чата
+     * @returns {Promise<Array>} Массив сообщений
+     */
+    async getChat() {
+        if (!this.loaded || this.data.chat.length === 0) {
+            await this.load();
+        }
+        return this.data.chat;
+    }
+    
+    /**
+     * Получает черный список
+     * @returns {Promise<Array>} Массив записей
+     */
+    async getBlacklist() {
+        if (!this.loaded || this.data.blacklist.length === 0) {
+            await this.load();
+        }
+        return this.data.blacklist;
+    }
+    
+    // ========== УПРАВЛЕНИЕ ДАННЫМИ ==========
+    
+    /**
+     * Обновляет данные (перезагружает из Google Sheets)
+     * @returns {Promise<Object>} Обновленные данные
+     */
+    async refresh() {
+        console.log('🔄 Принудительное обновление данных...');
+        return await this.load(true);
+    }
+    
+    /**
+     * Сохраняет данные в localStorage как кэш
+     */
+    cacheToLocalStorage() {
+        try {
+            const cache = {
+                users: this.data.users,
+                roles: this.data.roles,
+                codes: this.data.codes,
+                timestamp: Date.now()
+            };
+            
+            localStorage.setItem('famq_cache', JSON.stringify(cache));
+            localStorage.setItem('famq_last_update', Date.now().toString());
+            
+            console.log('💾 Данные закэшированы в localStorage');
+        } catch (error) {
+            console.error('❌ Ошибка кэширования:', error);
+        }
+    }
+    
+    /**
+     * Загружает данные из кэша (fallback)
+     * @returns {Object} Данные из кэша
+     */
+    loadFromCache() {
+        try {
+            const cache = JSON.parse(localStorage.getItem('famq_cache') || '{}');
+            const timestamp = parseInt(localStorage.getItem('famq_last_update') || '0');
+            
+            if (cache.users && cache.roles && cache.codes) {
+                // Используем кэшированные данные
+                this.data.users = cache.users || [];
+                this.data.roles = cache.roles || [];
+                this.data.codes = cache.codes || [];
+                
+                // Обновляем свойства для совместимости
+                this.users = this.data.users;
+                this.roles = this.data.roles;
+                this.codes = this.data.codes;
+                
+                console.log('📂 Использую кэшированные данные');
+                console.log('🕐 Время кэша:', new Date(timestamp).toLocaleTimeString());
+                
+                this.findCurrentUser();
+                
+                return this.data;
+            }
+        } catch (error) {
+            console.error('❌ Ошибка загрузки из кэша:', error);
+        }
         
         return this.data;
     }
     
-    // ========== НАЙТИ И СОХРАНИТЬ ПОЛЬЗОВАТЕЛЯ ==========
-    
-    findAndSaveUser() {
-        const users = this.data.users;
+    /**
+     * Находит текущего пользователя и сохраняет в localStorage
+     */
+    findCurrentUser() {
+        const discordId = "913464996267180092"; // Твой Discord ID
+        const username = "exxy66"; // Твой username
         
-        // Ищем тебя по разным вариантам ID
-        const me = users.find(u => 
-            u.discordId === "913464996267180092" ||
-            u.discordid === "913464996267180092" ||
-            u.username === "exxy66"
+        const user = this.data.users.find(u => 
+            (u.discordId && u.discordId === discordId) ||
+            (u.discordid && u.discordid === discordId) ||
+            (u.username && u.username.toLowerCase() === username.toLowerCase())
         );
         
-        if (me) {
-            console.log('🎉 НАЙДЕН ПОЛЬЗОВАТЕЛЬ:', me);
+        if (user) {
+            console.log('🎉 Найден пользователь:', user.username || user.discordId);
             
-            // ГАРАНТИРОВАННОЕ СОХРАНЕНИЕ
-            localStorage.setItem('userRole', me.role || 'admin');
-            localStorage.setItem('currentUser', JSON.stringify(me));
-            localStorage.setItem('isAuthenticated', 'true');
-            localStorage.setItem('famq_current_user_id', me.id || '1');
+            // Сохраняем информацию о пользователе
+            const userData = {
+                id: user.id || user.discordId,
+                username: user.username,
+                discordId: user.discordId || user.discordid,
+                role: user.role || 'user',
+                avatar: user.avatar,
+                balance: user.balance || 0,
+                joinDate: user.joinDate
+            };
             
-            // Если админ в таблице - сохраняем это
-            if (me.role === 'admin') {
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            localStorage.setItem('userRole', userData.role);
+            
+            if (userData.role === 'admin') {
                 localStorage.setItem('isAdmin', 'true');
-                console.log('👑 СОХРАНЕНО: ТЫ АДМИН!');
+                console.log('👑 Ты админ!');
             }
             
-            // Событие для интерфейса
-            window.dispatchEvent(new CustomEvent('userDataLoaded', { detail: me }));
+            // Отправляем событие
+            window.dispatchEvent(new CustomEvent('userLoaded', { detail: userData }));
+            
+            return userData;
         } else {
-            console.log('⚠️ ПОЛЬЗОВАТЕЛЬ НЕ НАЙДЕН В БАЗЕ');
+            console.log('⚠️ Пользователь не найден в базе');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('isAdmin');
+            return null;
         }
     }
     
-    // ========== ГЕТТЕРЫ ==========
+    // ========== СТАТУС И ДИАГНОСТИКА ==========
     
-    async getUsers() {
-        if (this.data.users.length === 0) await this.syncAllData();
-        return this.data.users;
-    }
-    
-    async getRoleCodes() {
-        if (this.data.codes.length === 0) await this.syncAllData();
-        return this.data.codes;
-    }
-    
-    async getRoles() {
-        if (this.data.roles.length === 0) await this.syncAllData();
-        return this.data.roles;
-    }
-    
-    // ========== СОВМЕСТИМОСТЬ ==========
-    
+    /**
+     * Проверяет подключение к Google Sheets
+     * @returns {Promise<boolean>} Успешно ли подключение
+     */
     async testConnection() {
-        console.log('🔍 Проверка подключения...');
         try {
-            await this.syncAllData();
-            return this.data.users.length > 0;
-        } catch (e) {
+            const testUrl = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Пользователи')}`;
+            const response = await fetch(testUrl, { method: 'HEAD' });
+            return response.ok;
+        } catch (error) {
+            console.error('❌ Ошибка подключения:', error.message);
             return false;
         }
     }
     
-    async syncAll() {
-        return await this.syncAllData();
-    }
-    
-    async initialize() {
-        console.log('🚀 ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ...');
-        const data = await this.syncAllData();
-        console.log('✅ БАЗА ДАННЫХ ГОТОВА');
-        return data;
-    }
-    
-    // ========== УТИЛИТЫ ==========
-    
+    /**
+     * Получает статус базы данных
+     * @returns {Object} Статус
+     */
     getStatus() {
         return {
+            loaded: this.loaded,
             users: this.data.users.length,
+            applications: this.data.applications.length,
+            news: this.data.news.length,
+            chat: this.data.chat.length,
             roles: this.data.roles.length,
             codes: this.data.codes.length,
-            timestamp: new Date().toLocaleTimeString()
+            timestamp: this.loaded ? new Date().toLocaleTimeString() : 'Не загружено'
         };
+    }
+    
+    /**
+     * Синхронизирует все данные (алиас для load)
+     * @returns {Promise<Object>} Все данные
+     */
+    async syncAll() {
+        return await this.load();
+    }
+    
+    /**
+     * Инициализирует базу данных
+     * @returns {Promise<Object>} Все данные
+     */
+    async initialize() {
+        console.log('🚀 Инициализация базы данных...');
+        const data = await this.load();
+        console.log('✅ База данных готова');
+        
+        // Отправляем событие
+        window.dispatchEvent(new Event('databaseReady'));
+        
+        return data;
     }
 }
 
 // ========== ГЛОБАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ==========
 
-// Создаём и сразу сохраняем в несколько мест
+// Создаём и настраиваем глобальные ссылки
 window.FamilyDatabase = new SimpleFamilyDatabase();
 window.database = window.FamilyDatabase;
 window.db = window.FamilyDatabase.data;
 
 // Автоматическая загрузка при старте
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📄 СТРАНИЦА ЗАГРУЖЕНА');
+    console.log('📄 Страница загружена');
     
+    // Даем время на рендеринг страницы
     setTimeout(async () => {
         try {
-            // 1. Загружаем данные
-            await window.FamilyDatabase.initialize();
+            console.log('🔄 Запускаю загрузку данных...');
             
-            // 2. Проверяем что сохранилось
-            console.log('🔍 ПРОВЕРКА СОХРАНЕНИЯ:');
-            console.log('localStorage userRole:', localStorage.getItem('userRole'));
-            console.log('database.users:', window.FamilyDatabase.data.users.length);
+            // Загружаем данные из Google Таблиц
+            const data = await window.FamilyDatabase.initialize();
             
-            // 3. Если роль не сохранилась - принудительно
-            if (!localStorage.getItem('userRole')) {
-                const me = window.FamilyDatabase.data.users.find(u => 
-                    u.discordId === "913464996267180092"
-                );
-                if (me) {
-                    localStorage.setItem('userRole', me.role || 'admin');
-                    console.log('🔄 РОЛЬ ПРИНУДИТЕЛЬНО СОХРАНЕНА:', me.role);
-                }
-            }
-            
-            // 4. Событие завершения
-            window.dispatchEvent(new Event('databaseReady'));
+            console.log('✅ Все данные загружены');
+            console.log('📊 Статус:', window.FamilyDatabase.getStatus());
             
         } catch (error) {
-            console.error('❌ ОШИБКА:', error);
+            console.error('❌ Критическая ошибка:', error);
+            
+            // Пробуем использовать кэш
+            window.FamilyDatabase.loadFromCache();
         }
-    }, 1000);
+    }, 500);
 });
+
+// Экспорт для использования в других модулях
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SimpleFamilyDatabase;
+}
