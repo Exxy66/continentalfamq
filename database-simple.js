@@ -27,40 +27,34 @@ class SimpleFamilyDatabase {
     
     // ========== ОСНОВНЫЕ МЕТОДЫ ==========
     
-    // Загружает данные из Google Sheets
-    async loadSheet(sheetName) {
-        try {
-            console.log(`📥 Загружаю ${sheetName}...`);
-            
-            // Создаем URL для загрузки CSV
-            const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
-            
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`Ошибка загрузки: ${response.status}`);
-            }
-            
-            const csvText = await response.text();
-            const data = this.parseCSV(csvText);
-            
-            console.log(`✅ ${sheetName} загружен: ${data.length} записей`);
-            return data;
-            
-        } catch (error) {
-            console.warn(`⚠️ Не удалось загрузить ${sheetName}:`, error.message);
-            
-            // Пробуем загрузить из кеша
-            const cached = this.getFromCache(sheetName);
-            if (cached.length > 0) {
-                console.log(`📂 Использую кеш для ${sheetName}: ${cached.length} записей`);
-                return cached;
-            }
-            
-            // Возвращаем пустой массив если нет кеша
-            return [];
+    // СТАЛО:
+async loadSheet(sheetName) {
+    console.log(`Загрузка ${sheetName}...`);
+    
+    try {
+        const response = await fetch(`https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`);
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка загрузки: ${response.status}`);
         }
+        
+        const data = await response.text();
+        console.log(`✅ ${sheetName} загружены успешно`);
+        return this.parseCSV(data); // Важно! Преобразовать CSV в массив
+        
+    } catch (error) {
+        console.error(`❌ Не удалось загрузить ${sheetName}:`, error.message);
+        
+        // Пробуем загрузить из кеша (если эта логика нужна)
+        const cached = this.getFromCache ? this.getFromCache(sheetName) : [];
+        if (cached && cached.length > 0) {
+            console.log(`📂 Использую кеш для ${sheetName}: ${cached.length} записей`);
+            return cached;
+        }
+        
+        return []; // Возвращаем пустой массив
     }
+}
     
     // Парсит CSV в массив объектов
     parseCSV(csvText) {
