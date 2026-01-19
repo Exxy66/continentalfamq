@@ -16,6 +16,10 @@ class SimpleFamilyDatabase {
             codes: 'КодыРолей'
         };
         
+        // URL Google Apps Script для добавления данных
+        // ЗАМЕНИ НА СВОЙ URL ПОСЛЕ СОЗДАНИЯ СКРИПТА!
+        this.API_URL = 'https://script.google.com/macros/s/AKfycbymSmKAgmGIjGL6zwdTpzhfnAFmH3tpcFJFERVuMTiw7So45yyWxZY0jLjcea6zkoMUhQ/exec';
+        
         // Основной источник данных - Google Sheets
         this.data = {
             users: [],
@@ -208,6 +212,296 @@ class SimpleFamilyDatabase {
         
         // Убираем пробелы и кавычки
         return result.map(field => field.trim().replace(/^"|"$/g, ''));
+    }
+    
+    // ========== ДОБАВЛЕНИЕ ДАННЫХ В GOOGLE SHEETS ==========
+    
+    /**
+     * Добавляет пользователя в Google Таблицу
+     * @param {Object} userData - Данные пользователя
+     * @returns {Promise<Object>} Результат операции
+     */
+    async addUser(userData) {
+        try {
+            console.log('📤 Добавляю пользователя в Google Таблицу:', userData);
+            
+            // Проверяем, нет ли уже такого пользователя
+            const existingUser = await this.getUserById(userData.discordId || userData.discordid);
+            if (existingUser) {
+                return {
+                    success: false,
+                    error: 'Пользователь с таким Discord ID уже существует'
+                };
+            }
+            
+            // Формируем полные данные пользователя
+            const fullUserData = {
+                id: this.generateUserId(),
+                discordId: userData.discordId,
+                discordid: userData.discordId, // дублируем для совместимости
+                username: userData.username || userData.discordUsername,
+                avatar: userData.avatar || userData.discordAvatar || '',
+                role: userData.role || 'user',
+                balance: userData.balance || 0,
+                joinDate: new Date().toISOString().split('T')[0],
+                lastLogin: new Date().toISOString(),
+                status: 'active',
+                notifications: 'enabled',
+                accessToken: this.generateToken(),
+                createdAt: new Date().toISOString(),
+                // Дополнительные поля из формы
+                email: userData.email || '',
+                phone: userData.phone || '',
+                bio: userData.bio || '',
+                country: userData.country || '',
+                discordTag: userData.discordTag || ''
+            };
+            
+            // Отправляем данные в Google Apps Script
+            const response = await fetch(this.API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'addUser',
+                    user: fullUserData
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Пользователь добавлен в Google Таблицу:', result);
+                
+                // Обновляем локальные данные
+                await this.refresh();
+                
+                return {
+                    success: true,
+                    userId: result.userId || fullUserData.id,
+                    userData: fullUserData,
+                    message: 'Пользователь успешно зарегистрирован'
+                };
+            } else {
+                throw new Error(result.error || 'Неизвестная ошибка при добавлении');
+            }
+            
+        } catch (error) {
+            console.error('❌ Ошибка добавления пользователя:', error);
+            
+            // Сохраняем во временный кэш для последующей синхронизации
+            this.savePendingUser(userData);
+            
+            return {
+                success: false,
+                error: error.message,
+                message: 'Ошибка при добавлении пользователя. Данные сохранены локально.'
+            };
+        }
+    }
+    
+    /**
+     * Добавляет заявку в Google Таблицу
+     * @param {Object} applicationData - Данные заявки
+     * @returns {Promise<Object>} Результат операции
+     */
+    async addApplication(applicationData) {
+        return await this.addToSheet('applications', applicationData);
+    }
+    
+    /**
+     * Добавляет новость в Google Таблицу
+     * @param {Object} newsData - Данные новости
+     * @returns {Promise<Object>} Результат операции
+     */
+    async addNews(newsData) {
+        return await this.addToSheet('news', newsData);
+    }
+    
+    /**
+     * Добавляет сообщение в чат
+     * @param {Object} messageData - Данные сообщения
+     * @returns {Promise<Object>} Результат операции
+     */
+    async addChatMessage(messageData) {
+        return await this.addToSheet('chat', messageData);
+    }
+    
+    /**
+     * Общий метод для добавления данных в любую таблицу
+     * @param {string} sheetKey - Ключ таблицы (users, applications и т.д.)
+     * @param {Object} itemData - Данные для добавления
+     * @returns {Promise<Object>} Результат операции
+     */
+    async addToSheet(sheetKey, itemData) {
+        try {
+            console.log(`📤 Добавляю данные в таблицу "${sheetKey}":`, itemData);
+            
+            const response = await fetch(this.API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'addToSheet',
+                    sheet: this.sheets[sheetKey],
+                    data: itemData
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log(`✅ Данные добавлены в "${sheetKey}":`, result);
+                
+                // Обновляем локальные данные
+                await this.refresh();
+                
+                return {
+                    success: true,
+                    message: 'Данные успешно добавлены',
+                    result: result
+                };
+            } else {
+                throw new Error(result.error || 'Неизвестная ошибка');
+            }
+            
+        } catch (error) {
+            console.error(`❌ Ошибка добавления в "${sheetKey}":`, error);
+            
+            // Сохраняем во временный кэш
+            this.savePendingItem(sheetKey, itemData);
+            
+            return {
+                success: false,
+                error: error.message,
+                message: 'Ошибка при добавлении данных'
+            };
+        }
+    }
+    
+    // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ РЕГИСТРАЦИИ ==========
+    
+    /**
+     * Генерирует уникальный ID пользователя
+     * @returns {string} Уникальный ID
+     */
+    generateUserId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+    
+    /**
+     * Генерирует токен доступа
+     * @returns {string} Токен
+     */
+    generateToken() {
+        return 'famq_token_' + Math.random().toString(36).substring(2, 15) + 
+               Math.random().toString(36).substring(2, 15);
+    }
+    
+    /**
+     * Сохраняет пользователя в локальный кэш при ошибке
+     * @param {Object} userData - Данные пользователя
+     */
+    savePendingUser(userData) {
+        try {
+            const pendingUsers = JSON.parse(localStorage.getItem('famq_pending_users') || '[]');
+            pendingUsers.push({
+                ...userData,
+                timestamp: Date.now(),
+                synced: false
+            });
+            localStorage.setItem('famq_pending_users', JSON.stringify(pendingUsers));
+            console.log('💾 Пользователь сохранен в локальный кэш');
+        } catch (error) {
+            console.error('Ошибка сохранения в кэш:', error);
+        }
+    }
+    
+    /**
+     * Сохраняет элемент в локальный кэш
+     * @param {string} sheetKey - Тип данных
+     * @param {Object} itemData - Данные
+     */
+    savePendingItem(sheetKey, itemData) {
+        try {
+            const pendingItems = JSON.parse(localStorage.getItem('famq_pending_items') || '{}');
+            if (!pendingItems[sheetKey]) {
+                pendingItems[sheetKey] = [];
+            }
+            pendingItems[sheetKey].push({
+                ...itemData,
+                timestamp: Date.now(),
+                synced: false
+            });
+            localStorage.setItem('famq_pending_items', JSON.stringify(pendingItems));
+            console.log(`💾 Данные сохранены в локальный кэш: ${sheetKey}`);
+        } catch (error) {
+            console.error('Ошибка сохранения в кэш:', error);
+        }
+    }
+    
+    /**
+     * Пытается синхронизировать отложенные данные
+     */
+    async syncPendingData() {
+        console.log('🔄 Синхронизация отложенных данных...');
+        
+        // Синхронизируем пользователей
+        try {
+            const pendingUsers = JSON.parse(localStorage.getItem('famq_pending_users') || '[]');
+            for (const user of pendingUsers) {
+                if (!user.synced) {
+                    const result = await this.addUser(user);
+                    if (result.success) {
+                        user.synced = true;
+                        console.log('✅ Пользователь синхронизирован:', user.username);
+                    }
+                }
+            }
+            // Удаляем синхронизированных пользователей
+            const unsyncedUsers = pendingUsers.filter(u => !u.synced);
+            localStorage.setItem('famq_pending_users', JSON.stringify(unsyncedUsers));
+        } catch (error) {
+            console.error('Ошибка синхронизации пользователей:', error);
+        }
+    }
+    
+    /**
+     * Проверяет существование пользователя
+     * @param {string} discordId - Discord ID
+     * @param {string} username - Имя пользователя
+     * @returns {Promise<boolean>} Существует ли пользователь
+     */
+    async isUserExists(discordId, username = null) {
+        await this.getUsers();
+        
+        return this.data.users.some(user => 
+            user.discordId === discordId || 
+            user.discordid === discordId ||
+            (username && user.username === username)
+        );
+    }
+    
+    /**
+     * Регистрирует нового пользователя
+     * @param {Object} userData - Данные для регистрации
+     * @returns {Promise<Object>} Результат регистрации
+     */
+    async registerUser(userData) {
+        // Проверяем существование
+        const exists = await this.isUserExists(userData.discordId, userData.username);
+        if (exists) {
+            return {
+                success: false,
+                error: 'Пользователь уже существует',
+                message: 'Пользователь с таким Discord ID или именем уже зарегистрирован'
+            };
+        }
+        
+        // Добавляем пользователя
+        return await this.addUser(userData);
     }
     
     // ========== ПОЛУЧЕНИЕ ДАННЫХ ==========
@@ -470,6 +764,9 @@ class SimpleFamilyDatabase {
         console.log('🚀 Инициализация базы данных...');
         const data = await this.load();
         console.log('✅ База данных готова');
+        
+        // Пытаемся синхронизировать отложенные данные
+        setTimeout(() => this.syncPendingData(), 3000);
         
         // Отправляем событие
         window.dispatchEvent(new Event('databaseReady'));
