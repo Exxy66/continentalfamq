@@ -4983,119 +4983,309 @@
     </script>
 
 <script>
-// ============ Continental FamQ - Final Working Version ============
-const API_URL = 'https://script.google.com/macros/s/AKfycbzzI3VVuihkOqOFMk8EkYCtEzePDE47VfTyD-grPBe6uxklnC1BDq-YjgyMN8j7fgRz/exec';
+// ============ Continental FamQ CRM Frontend ============
+const API_URL = 'https://script.google.com/macros/s/AKfycbyy6uqdJKCDh0hfLBD8h8e2prd6zvCLsvbxdvRw-9KeuWlvEEiZ9qdWz16bpnacEzTL/exec';
 
-// При загрузке страницы
-window.onload = function() {
-  console.log('🚀 Continental FamQ loaded');
-  
-  // 1. Убираем "Подтвердите действие" если есть
-  setTimeout(cleanPage, 100);
-  
-  // 2. Настраиваем кнопки
-  setTimeout(setupButtons, 200);
+// Глобальные данные
+let familyData = {
+  members: [],
+  applications: [],
+  blacklist: [],
+  news: [],
+  roles: [],
+  settings: {}
 };
 
-// 1. Очистка страницы
+// Инициализация
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('🚀 Continental FamQ CRM загружается...');
+  
+  // 1. Убираем "Подтвердите действие"
+  cleanPage();
+  
+  // 2. Загружаем данные
+  await loadFamilyData();
+  
+  // 3. Настраиваем интерфейс
+  setupInterface();
+  
+  // 4. Обновляем статистику
+  updateStats();
+});
+
+// Очистка страницы
 function cleanPage() {
-  // Просто заменяем текст, не трогая структуру
   document.body.innerHTML = document.body.innerHTML
-    .replace(/Подтвердите действие на exxy66\.github\.io/g, '')
-    .replace(/Отправлен POST запрос.*проверь консоль Google Apps Script/g, '');
+    .replace(/Подтвердите действие.*/g, '')
+    .replace(/Отправлен POST запрос.*/g, '');
 }
 
-// 2. Настройка кнопок
-function setupButtons() {
-  // Находим кнопку "ПОДАТЬ ЗАЯВКУ"
-  const buttons = document.querySelectorAll('a, button, [href*="ЗАЯВК"], [href*="заявк"], [href*="ПОДАТЬ"]');
-  
-  buttons.forEach(btn => {
-    const text = btn.textContent || btn.innerText || '';
+// Загрузка данных
+async function loadFamilyData() {
+  try {
+    const response = await fetch(`${API_URL}?action=get_all_data`);
+    const result = await response.json();
     
-    if (text.includes('ПОДАТЬ') || text.includes('ЗАЯВК')) {
-      btn.onclick = function(e) {
-        e.preventDefault();
-        submitApplication();
-      };
-      btn.style.cursor = 'pointer';
+    if (result.success) {
+      familyData = result.data;
+      console.log('✅ Данные загружены:', {
+        members: familyData.members?.length || 0,
+        applications: familyData.applications?.length || 0,
+        blacklist: familyData.blacklist?.length || 0
+      });
     }
-  });
+  } catch (error) {
+    console.error('❌ Ошибка загрузки:', error);
+  }
 }
 
-// 3. Отправка заявки (РАБОЧИЙ СПОСОБ)
-async function submitApplication() {
-  // Простая форма
-  const nickname = prompt('🎮 Ваш ник в GTA:');
-  if (!nickname) return;
+// Настройка интерфейса
+function setupInterface() {
+  // Кнопка "ПОДАТЬ ЗАЯВКУ"
+  const applyBtn = document.querySelector('[href*="ЗАЯВКУ"], [href*="заявк"]') || 
+                   document.querySelector('a, button');
   
-  const age = prompt('📅 Ваш возраст:') || '18';
-  const discord = prompt('💬 Ваш Discord (name#1234):') || '';
+  if (applyBtn) {
+    applyBtn.onclick = function(e) {
+      e.preventDefault();
+      showApplicationForm();
+    };
+  }
   
-  if (!confirm(`Отправить заявку?\n\n🎮 Ник: ${nickname}\n📅 Возраст: ${age}\n💬 Discord: ${discord}`)) {
+  // Кнопка "ЧЕРНЫЙ СПИСОК"
+  const blacklistBtn = document.querySelector('[href*="ЧЕРНЫЙ"], [href*="черный"]');
+  if (blacklistBtn) {
+    blacklistBtn.onclick = function(e) {
+      e.preventDefault();
+      showBlacklist();
+    };
+  }
+  
+  // Кнопка "НОВОСТИ"
+  const newsBtn = document.querySelector('[href*="НОВОСТИ"], [href*="новости"]');
+  if (newsBtn) {
+    newsBtn.onclick = function(e) {
+      e.preventDefault();
+      showNews();
+    };
+  }
+}
+
+// Обновление статистики
+function updateStats() {
+  const statsHTML = `
+    <div style="
+      background: rgba(22, 33, 62, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    ">
+      <div style="text-align: center;">
+        <div style="font-size: 2.5em; color: #4cc9f0; font-weight: bold;">
+          ${familyData.members?.length || 0}
+        </div>
+        <div style="color: #b8c1ec;">👥 Членов семьи</div>
+      </div>
+      
+      <div style="text-align: center;">
+        <div style="font-size: 2.5em; color: #e94560; font-weight: bold;">
+          ${familyData.applications?.filter(a => a.Статус === 'pending').length || 0}
+        </div>
+        <div style="color: #b8c1ec;">📝 Ожидают рассмотрения</div>
+      </div>
+      
+      <div style="text-align: center;">
+        <div style="font-size: 2.5em; color: #9C27B0; font-weight: bold;">
+          ${familyData.blacklist?.length || 0}
+        </div>
+        <div style="color: #b8c1ec;">🚫 В черном списке</div>
+      </div>
+      
+      <div style="text-align: center;">
+        <div style="font-size: 2.5em; color: #4CAF50; font-weight: bold;">
+          ${familyData.news?.length || 0}
+        </div>
+        <div style="color: #b8c1ec;">📢 Новостей</div>
+      </div>
+    </div>
+  `;
+  
+  // Вставляем статистику после заголовка
+  const header = document.querySelector('h1, .header, .hero');
+  if (header) {
+    header.insertAdjacentHTML('afterend', statsHTML);
+  }
+}
+
+// Форма заявки
+function showApplicationForm() {
+  const formHTML = `
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9998; display: flex; align-items: center; justify-content: center;">
+      <div style="background: #1a1a2e; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; border: 2px solid #e94560;">
+        <h2 style="color: #e94560; margin-top: 0;">📝 Заявка в Continental FamQ</h2>
+        
+        <form id="appForm">
+          <input type="text" placeholder="🎮 Ваш ник в GTA *" required 
+                 style="width:100%; padding:12px; margin:10px 0; background: #0a0a1a; border: 1px solid #2a4b7c; color: white; border-radius: 5px;">
+          
+          <input type="number" placeholder="📅 Ваш возраст *" required min="16" max="60"
+                 style="width:100%; padding:12px; margin:10px 0; background: #0a0a1a; border: 1px solid #2a4b7c; color: white; border-radius: 5px;">
+          
+          <input type="text" placeholder="💬 Ваш Discord (name#1234) *" required 
+                 style="width:100%; padding:12px; margin:10px 0; background: #0a0a1a; border: 1px solid #2a4b7c; color: white; border-radius: 5px;">
+          
+          <textarea placeholder="💭 Почему хотите вступить в Continental FamQ? *" required rows="4"
+                    style="width:100%; padding:12px; margin:10px 0; background: #0a0a1a; border: 1px solid #2a4b7c; color: white; border-radius: 5px;"></textarea>
+          
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="submit" style="flex:1; padding:12px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer;">
+              📤 Отправить заявку
+            </button>
+            <button type="button" onclick="this.closest('div[style*=\"position: fixed\"]').remove()" 
+                    style="flex:1; padding:12px; background: #2a4b7c; color: white; border: none; border-radius: 5px; cursor: pointer;">
+              ❌ Отмена
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', formHTML);
+  
+  document.getElementById('appForm').onsubmit = async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+      action: 'submit_application',
+      nickname: formData.getAll('input')[0].value,
+      age: formData.getAll('input')[1].value,
+      discord: formData.getAll('input')[2].value,
+      reason: formData.getAll('textarea')[0].value
+    };
+    
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('✅ Заявка отправлена! ID: ' + result.application_id);
+        document.querySelector('div[style*="position: fixed"]').remove();
+        await loadFamilyData();
+        updateStats();
+      } else {
+        alert('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+      }
+    } catch (error) {
+      alert('⚠️ Ошибка сети. Попробуйте позже.');
+    }
+  };
+}
+
+// Показать черный список
+function showBlacklist() {
+  if (!familyData.blacklist || familyData.blacklist.length === 0) {
+    alert('🚫 Черный список пуст');
     return;
   }
   
-  // Вариант 1: Используем JSONP для обхода CORS
-  try {
-    // Создаем тег script (JSONP)
-    const script = document.createElement('script');
-    const callbackName = 'handleResponse_' + Date.now();
-    
-    window[callbackName] = function(data) {
-      console.log('✅ Ответ API:', data);
-      if (data.success) {
-        alert('✅ Заявка отправлена!');
-      } else {
-        alert('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'));
-      }
-      delete window[callbackName];
-    };
-    
-    // Формируем URL с JSONP
-    const url = `${API_URL}?action=add_app&nickname=${encodeURIComponent(nickname)}&age=${age}&discord=${encodeURIComponent(discord)}&callback=${callbackName}`;
-    script.src = url;
-    
-    document.head.appendChild(script);
-    
-  } catch (error) {
-    console.error('❌ Ошибка:', error);
-    
-    // Вариант 2: Сохраняем локально
-    saveLocalApplication(nickname, age, discord);
-    alert('💾 Заявка сохранена в браузере\n(API временно недоступен)');
-  }
-}
-
-// 4. Локальное сохранение
-function saveLocalApplication(nickname, age, discord) {
-  const apps = JSON.parse(localStorage.getItem('continental_apps') || '[]');
-  apps.push({
-    id: 'LOCAL_' + Date.now(),
-    nickname: nickname,
-    age: age,
-    discord: discord,
-    date: new Date().toISOString(),
-    status: 'pending'
-  });
-  localStorage.setItem('continental_apps', JSON.stringify(apps));
+  const list = familyData.blacklist.map(item => 
+    `• ${item.Ник || 'Без ника'} (${item['Discord ID']})\n  Причина: ${item.Причина || 'Не указана'}\n  Добавил: ${item['Кто добавил'] || 'Система'}\n`
+  ).join('\n');
   
-  console.log('💾 Сохранено заявок:', apps.length);
+  alert(`🚫 ЧЕРНЫЙ СПИСОК (${familyData.blacklist.length}):\n\n${list}`);
 }
 
-// 5. Функция для просмотра сохраненных заявок
-window.viewApplications = function() {
-  const apps = JSON.parse(localStorage.getItem('continental_apps') || '[]');
-  if (apps.length === 0) {
-    alert('📭 Нет сохраненных заявок');
-  } else {
-    const list = apps.map(app => 
-      `🎮 ${app.nickname} (${app.age} лет)\n💬 ${app.discord}\n📅 ${new Date(app.date).toLocaleDateString()}\n---`
-    ).join('\n');
-    
-    alert(`💾 Сохраненные заявки (${apps.length}):\n\n${list}`);
+// Показать новости
+function showNews() {
+  if (!familyData.news || familyData.news.length === 0) {
+    alert('📢 Новостей пока нет');
+    return;
   }
-};
+  
+  const recentNews = familyData.news.slice(-5).reverse().map(item => 
+    `📢 ${item.Заголовок || 'Без заголовка'}\n${item.Текст?.substring(0, 100)}...\n👤 ${item.Автор || 'Неизвестно'} • ${new Date(item.Дата).toLocaleDateString()}\n`
+  ).join('\n---\n');
+  
+  alert(`📢 ПОСЛЕДНИЕ НОВОСТИ:\n\n${recentNews}`);
+}
+
+// Админ-панель (скрытая)
+function showAdminPanel() {
+  const code = prompt('🔐 Введите код администратора:');
+  if (code === 'CONTINENTAL2026') {
+    const panelHTML = `
+      <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0a0a1a; padding: 30px; border: 3px solid #e94560; border-radius: 10px; z-index: 9999; color: white; max-width: 90%; max-height: 90%; overflow: auto;">
+        <h2 style="color: #e94560;">👑 АДМИН-ПАНЕЛЬ Continental FamQ</h2>
+        
+        <div style="margin: 20px 0;">
+          <button onclick="exportData()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+            📊 Экспорт данных
+          </button>
+          
+          <button onclick="viewAllApplications()" style="padding: 10px 20px; background: #FF9800; color: white; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+            📝 Все заявки (${familyData.applications?.length || 0})
+          </button>
+          
+          <button onclick="viewAllMembers()" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+            👥 Все члены (${familyData.members?.length || 0})
+          </button>
+        </div>
+        
+        <div id="adminContent"></div>
+        
+        <button onclick="this.parentElement.remove()" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 5px; margin-top: 20px; cursor: pointer;">
+          ❌ Закрыть
+        </button>
+      </div>
+      <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9998;"></div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', panelHTML);
+  } else if (code) {
+    alert('❌ Неверный код');
+  }
+}
+
+// Добавляем скрытую кнопку админ-панели
+setTimeout(() => {
+  const adminBtn = document.createElement('div');
+  adminBtn.innerHTML = '👑';
+  adminBtn.title = 'Админ-панель';
+  adminBtn.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: #e94560;
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 9997;
+    opacity: 0.3;
+    transition: opacity 0.3s;
+    box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+  `;
+  adminBtn.onclick = showAdminPanel;
+  adminBtn.onmouseover = () => adminBtn.style.opacity = '1';
+  adminBtn.onmouseout = () => adminBtn.style.opacity = '0.3';
+  
+  document.body.appendChild(adminBtn);
+}, 2000);
 </script>
 </body>
 </html>
