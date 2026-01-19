@@ -4983,139 +4983,43 @@
     </script>
 
 <script>
-// ============ Continental FamQ - Final Fix ============
+// ============ Continental FamQ - Minimal Version ============
 const API_URL = 'https://script.google.com/macros/s/AKfycbwIMZ_IIdrxaQKJJFBWpgIjYwISYgZwvyIiJ95qzQdgC2-pHcSEttwr5TSa4ydEuObz/exec';
 
-// При загрузке
+// При загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 Continental FamQ запущен');
+  console.log('✅ Continental FamQ loaded');
   
-  // 1. УБРАТЬ НАДОЕВШИЕ СООБЩЕНИЯ
-  cleanupPage();
-  
-  // 2. НАСТРОИТЬ КНОПКИ
-  setupButtons();
-  
-  // 3. ПРОВЕРИТЬ API
-  checkAPI();
+  // ТОЛЬКО убираем "Подтвердите действие"
+  setTimeout(removeConfirmationOnly, 300);
 });
 
-// ============ 1. ОЧИСТКА СТРАНИЦЫ ============
-function cleanupPage() {
-  // Удаляем все тексты с подтверждением
-  const elements = document.querySelectorAll('body, div, p, span, h1, h2, h3');
+// Убрать только текст подтверждения
+function removeConfirmationOnly() {
+  // Ищем и заменяем только текст, не трогаем структуру
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
   
-  elements.forEach(el => {
-    if (el.textContent) {
-      el.textContent = el.textContent
+  let node;
+  while (node = walker.nextNode()) {
+    if (node.textContent.includes('Подтвердите действие')) {
+      node.textContent = node.textContent
         .replace('Подтвердите действие на exxy66.github.io', '')
         .replace('Отправлен POST запрос', '')
         .replace('проверь консоль Google Apps Script', '');
     }
-  });
+  }
   
-  // Если остались пустые элементы - удаляем
-  document.querySelectorAll('div, p').forEach(el => {
-    if (!el.textContent.trim() && !el.innerHTML.trim()) {
+  // Убираем пустые параграфы
+  document.querySelectorAll('p, div').forEach(el => {
+    if (el.textContent.trim() === '' && !el.children.length) {
       el.remove();
     }
   });
-}
-
-// ============ 2. НАСТРОЙКА КНОПОК ============
-function setupButtons() {
-  // Кнопка "ПОДАТЬ ЗАЯВКУ"
-  const applyButtons = document.querySelectorAll('a, button, [href*="заявк"], [href*="ЗАЯВК"]');
-  
-  applyButtons.forEach(btn => {
-    btn.onclick = function(e) {
-      e.preventDefault();
-      submitApplication();
-    };
-    btn.style.cursor = 'pointer';
-  });
-  
-  // Кнопка "ИЗВО" (это твоя кнопка 👁️)
-  const viewBtn = document.querySelector('button, a, [href*="ИЗВО"]');
-  if (viewBtn) {
-    viewBtn.onclick = function() {
-      const apps = JSON.parse(localStorage.getItem('famq_apps') || '[]');
-      alert(apps.length > 0 ? 
-        `Сохранено заявок: ${apps.length}\nПоследняя: ${apps[apps.length-1].nickname}` : 
-        'Нет сохраненных заявок');
-    };
-  }
-}
-
-// ============ 3. ОТПРАВКА ЗАЯВКИ ============
-function submitApplication() {
-  const nickname = prompt('🎮 Ваш ник в GTA:');
-  if (!nickname) return;
-  
-  const age = prompt('📅 Ваш возраст:') || '18';
-  const discord = prompt('💬 Ваш Discord:') || '';
-  
-  if (confirm(`Отправить заявку?\n\nНик: ${nickname}\nВозраст: ${age}\nDiscord: ${discord}`)) {
-    // Пробуем отправить на API
-    fetch(`${API_URL}?action=add_app&nickname=${encodeURIComponent(nickname)}&age=${age}&discord=${encodeURIComponent(discord)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert('✅ Заявка отправлена на сервер!');
-        } else {
-          throw new Error('API error');
-        }
-      })
-      .catch(error => {
-        // Сохраняем локально
-        const apps = JSON.parse(localStorage.getItem('famq_apps') || '[]');
-        apps.push({
-          nickname,
-          age,
-          discord,
-          date: new Date().toISOString(),
-          id: 'LOCAL_' + Date.now()
-        });
-        localStorage.setItem('famq_apps', JSON.stringify(apps));
-        alert('💾 Заявка сохранена в браузере');
-      });
-  }
-}
-
-// ============ 4. ПРОВЕРКА API ============
-function checkAPI() {
-  fetch(`${API_URL}?action=ping`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        console.log('✅ API подключен');
-        // Показываем статус
-        showStatus('✅ API работает', 'green');
-      }
-    })
-    .catch(() => {
-      console.log('🌐 Локальный режим');
-      showStatus('🌐 Локальный режим', 'orange');
-    });
-}
-
-// ============ 5. ПОКАЗ СТАТУСА ============
-function showStatus(text, color) {
-  const status = document.createElement('div');
-  status.textContent = text;
-  status.style.cssText = `
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: ${color};
-    color: white;
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 9999;
-  `;
-  document.body.appendChild(status);
-  
-  setTimeout(() => status.remove(), 3000);
 }
 </script>
 
