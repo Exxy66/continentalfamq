@@ -6,257 +6,7 @@
     <title>Continental FamQ | Главная</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
- <script>
-// ============ НОВЫЙ РАБОЧИЙ КОД ============
-const API_URL = 'https://script.google.com/macros/s/AKfycbwRL6JryXgOOZTschZKdvyrSX4OKwHa4f7R9qolkws0MRy7H75QQrBE3e_qG-RcoumP/exec';
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', async function() {
-  console.log('🚀 Continental FamQ загружен');
-  
-  // 1. Показываем что сайт работает
-  document.body.innerHTML += `
-    <div id="status" style="
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      background: #4CAF50;
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
-      z-index: 10000;
-    ">
-      ✅ Сайт загружен
-    </div>
-  `;
-  
-  // 2. Используем ПРОСТОЙ GET запрос (без CORS проблем)
-  setTimeout(() => {
-    testSimpleConnection();
-  }, 1000);
-});
-
-// ============ ПРОСТОЙ ТЕСТ ============
-async function testSimpleConnection() {
-  const statusDiv = document.getElementById('status');
-  
-  // Вариант 1: Прямой GET запрос с параметрами в URL
-  try {
-    statusDiv.innerHTML = '🔗 Тестируем подключение...';
-    statusDiv.style.background = '#2196F3';
-    
-    // ЭТО САМЫЙ ПРОСТОЙ СПОСОБ!
-    const testUrl = `${API_URL}?action=test&_=${Date.now()}`;
-    console.log('🔧 Запрос к:', testUrl);
-    
-    const response = await fetch(testUrl);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('✅ Успех:', data);
-      
-      statusDiv.innerHTML = `✅ ${data.message || 'API работает!'}`;
-      statusDiv.style.background = '#4CAF50';
-      
-      // Активируем кнопки
-      activateButtons();
-      
-    } else {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    
-  } catch (error) {
-    console.error('❌ Ошибка:', error);
-    
-    statusDiv.innerHTML = '🌐 Используем локальный режим';
-    statusDiv.style.background = '#FF9800';
-    
-    // Переходим в локальный режим
-    enableLocalMode();
-  }
-}
-
-// ============ АКТИВАЦИЯ КНОПОК ============
-function activateButtons() {
-  // Находим все кнопки и ссылки
-  const buttons = document.querySelectorAll('a, button, [href]');
-  
-  buttons.forEach(btn => {
-    // Убираем блокировку
-    btn.style.pointerEvents = 'auto';
-    btn.style.opacity = '1';
-    
-    // Для кнопки "ПОДАТЬ ЗАЯВКУ"
-    if (btn.textContent.includes('ПОДАТЬ') || btn.textContent.includes('ЗАЯВК')) {
-      btn.onclick = function(e) {
-        e.preventDefault();
-        showSimpleForm();
-      };
-    }
-    
-    // Для кнопки "DEVELOPER КОД"
-    if (btn.textContent.includes('DEVELOPER') || btn.textContent.includes('КОД')) {
-      btn.onclick = function(e) {
-        e.preventDefault();
-        const code = prompt('Введите developer код:');
-        if (code === 'CONTINENTAL2026') {
-          alert('✅ Доступ предоставлен!');
-        } else if (code) {
-          alert('❌ Неверный код');
-        }
-      };
-    }
-  });
-}
-
-// ============ ПРОСТАЯ ФОРМА ============
-function showSimpleForm() {
-  const formHTML = `
-    <div style="
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.3);
-      z-index: 99999;
-      width: 90%;
-      max-width: 500px;
-    ">
-      <h2 style="margin-top:0;">📝 Заявка в Continental FamQ</h2>
-      
-      <div style="margin: 15px 0;">
-        <input type="text" placeholder="Ваш ник в игре" id="nickname" style="width:100%;padding:10px;margin:5px 0;">
-      </div>
-      
-      <div style="margin: 15px 0;">
-        <input type="number" placeholder="Ваш возраст" id="age" style="width:100%;padding:10px;margin:5px 0;">
-      </div>
-      
-      <div style="margin: 15px 0;">
-        <input type="text" placeholder="Ваш Discord (name#1234)" id="discord" style="width:100%;padding:10px;margin:5px 0;">
-      </div>
-      
-      <div style="margin: 15px 0;">
-        <textarea placeholder="Почему хотите вступить?" id="motivation" style="width:100%;padding:10px;height:100px;margin:5px 0;"></textarea>
-      </div>
-      
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button onclick="submitApplication()" style="flex:1;padding:12px;background:#4CAF50;color:white;border:none;border-radius:5px;">
-          📤 Отправить
-        </button>
-        <button onclick="this.parentElement.parentElement.remove()" style="flex:1;padding:12px;background:#f44336;color:white;border:none;border-radius:5px;">
-          ❌ Отмена
-        </button>
-      </div>
-    </div>
-    
-    <div style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      z-index: 99998;
-    "></div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', formHTML);
-}
-
-// ============ ОТПРАВКА ЗАЯВКИ ============
-async function submitApplication() {
-  const nickname = document.getElementById('nickname').value;
-  const age = document.getElementById('age').value;
-  const discord = document.getElementById('discord').value;
-  const motivation = document.getElementById('motivation').value;
-  
-  if (!nickname || !age || !discord) {
-    alert('⚠️ Заполните все обязательные поля!');
-    return;
-  }
-  
-  // Показываем статус
-  const statusDiv = document.getElementById('status');
-  statusDiv.innerHTML = '📤 Отправляем заявку...';
-  statusDiv.style.background = '#FF9800';
-  
-  try {
-    // Используем GET запрос для отправки (проще всего)
-    const submitUrl = `${API_URL}?action=add&sheet=applications&nickname=${encodeURIComponent(nickname)}&age=${age}&discord_id=${encodeURIComponent(discord)}&motivation=${encodeURIComponent(motivation)}&status=pending`;
-    
-    console.log('📤 Отправляем:', submitUrl);
-    
-    const response = await fetch(submitUrl);
-    const result = await response.json();
-    
-    console.log('📥 Ответ:', result);
-    
-    if (result.success) {
-      statusDiv.innerHTML = '✅ Заявка отправлена!';
-      statusDiv.style.background = '#4CAF50';
-      
-      // Закрываем форму
-      document.querySelector('div[style*="background: rgba(0,0,0,0.7)"]').remove();
-      document.querySelector('div[style*="transform: translate(-50%, -50%)"]').remove();
-      
-      alert('🎉 Ваша заявка отправлена! Ожидайте ответа в Discord.');
-      
-    } else {
-      throw new Error(result.error || 'Ошибка сервера');
-    }
-    
-  } catch (error) {
-    console.error('❌ Ошибка отправки:', error);
-    
-    // Сохраняем локально
-    saveLocalApplication({ nickname, age, discord, motivation });
-    
-    statusDiv.innerHTML = '💾 Заявка сохранена локально';
-    statusDiv.style.background = '#9C27B0';
-    
-    // Закрываем форму
-    document.querySelector('div[style*="background: rgba(0,0,0,0.7)"]').remove();
-    document.querySelector('div[style*="transform: translate(-50%, -50%)"]').remove();
-    
-    alert('⚠️ Заявка сохранена локально (API недоступен)');
-  }
-}
-
-// ============ ЛОКАЛЬНОЕ СОХРАНЕНИЕ ============
-function saveLocalApplication(data) {
-  const applications = JSON.parse(localStorage.getItem('famq_applications') || '[]');
-  applications.push({
-    ...data,
-    id: Date.now(),
-    date: new Date().toISOString(),
-    status: 'pending'
-  });
-  localStorage.setItem('famq_applications', JSON.stringify(applications));
-  console.log('💾 Локально сохранено:', applications.length, 'заявок');
-}
-
-// ============ ЛОКАЛЬНЫЙ РЕЖИМ ============
-function enableLocalMode() {
-  console.log('🌐 Активирован локальный режим');
-  
-  // Активируем кнопки
-  setTimeout(activateButtons, 500);
-  
-  // Меняем статус
-  const statusDiv = document.getElementById('status');
-  statusDiv.innerHTML = '🌐 Локальный режим';
-  statusDiv.style.background = '#9C27B0';
-  
-  // Сообщаем пользователю
-  setTimeout(() => {
-    alert('🌐 Включен локальный режим\nВаши заявки будут сохранены в браузере');
-  }, 1000);
-}
-</script>
     
     <style>
         /* Все существующие стили остаются */
@@ -5231,6 +4981,174 @@ function enableLocalMode() {
         document.head.appendChild(style);
         
     </script>
+
+<script>
+// ============ Continental FamQ - Simple Working Version ============
+const API_URL = 'https://script.google.com/macros/s/AKfycbwIMZ_IIdrxaQKJJFBWpgIjYwISYgZwvyIiJ95qzQdgC2-pHcSEttwr5TSa4ydEuObz/exec';
+
+// ============ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ============
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('✅ Continental FamQ загружен');
+  
+  // 1. УДАЛИТЬ НАДПИСЬ "ПОДТВЕРДИТЕ ДЕЙСТВИЕ"
+  removeAnnoyingMessages();
+  
+  // 2. СДЕЛАТЬ КНОПКИ РАБОЧИМИ
+  makeButtonsWork();
+  
+  // 3. БЫСТРАЯ ПРОВЕРКА API
+  setTimeout(checkApiSilently, 1000);
+});
+
+// ============ 1. УДАЛЕНИЕ НАДОЕВШИХ СООБЩЕНИЙ ============
+function removeAnnoyingMessages() {
+  // Просто заменяем текст
+  const bodyHTML = document.body.innerHTML;
+  document.body.innerHTML = bodyHTML
+    .replace(/Подтвердите действие на exxy66\.github\.io/g, '')
+    .replace(/Отправлен POST запрос.*проверь консоль Google Apps Script/g, '');
+}
+
+// ============ 2. АКТИВАЦИЯ КНОПОК ============
+function makeButtonsWork() {
+  // Все кнопки и ссылки
+  const allElements = document.querySelectorAll('a, button');
+  
+  allElements.forEach(el => {
+    const text = el.textContent || el.innerText || '';
+    
+    // КНОПКА "ПОДАТЬ ЗАЯВКУ"
+    if (text.includes('ПОДАТЬ') || text.includes('ЗАЯВК')) {
+      el.onclick = async function(e) {
+        e.preventDefault();
+        
+        const nickname = prompt('🎮 ВАШ НИК В GTA:');
+        if (!nickname) return;
+        
+        const age = prompt('📅 ВАШ ВОЗРАСТ:') || '18';
+        const discord = prompt('💬 ВАШ DISCORD (username#1234):') || '';
+        
+        if (confirm(`Отправить заявку?\n\n🎮 Ник: ${nickname}\n📅 Возраст: ${age}\n💬 Discord: ${discord}`)) {
+          try {
+            const url = `${API_URL}?action=add_app&nickname=${encodeURIComponent(nickname)}&age=${age}&discord=${encodeURIComponent(discord)}&_=${Date.now()}`;
+            await fetch(url);
+            alert('✅ Заявка отправлена!');
+          } catch (error) {
+            // Сохраняем в браузере
+            const apps = JSON.parse(localStorage.getItem('famq_apps') || '[]');
+            apps.push({nickname, age, discord, date: new Date().toISOString()});
+            localStorage.setItem('famq_apps', JSON.stringify(apps));
+            alert('💾 Сохранено в браузере');
+          }
+        }
+      };
+    }
+    
+    // КНОПКА "DEVELOPER КОД"
+    if (text.includes('DEVELOPER') || text.includes('КОД')) {
+      el.onclick = function(e) {
+        e.preventDefault();
+        const code = prompt('🔐 ВВЕДИТЕ DEVELOPER КОД:');
+        if (code === 'CONTINENTAL2026') {
+          alert('✅ КОД ПРИНЯТ!');
+        } else if (code) {
+          alert('❌ НЕВЕРНЫЙ КОД');
+        }
+      };
+    }
+    
+    // КНОПКА "DISCORD"
+    if (text.includes('Discord') || text.includes('Войти')) {
+      el.href = 'https://discord.gg/d2WtFWd8nS';
+      el.target = '_blank';
+    }
+  });
+}
+
+// ============ 3. ПРОВЕРКА API ============
+async function checkApiSilently() {
+  try {
+    const url = `${API_URL}?action=ping&_=${Date.now()}`;
+    const response = await fetch(url);
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        console.log('✅ API работает:', data.pong || data.message);
+        showMessage('✅ API подключен', 3000);
+      }
+    }
+  } catch (error) {
+    console.log('🌐 Локальный режим');
+    showMessage('🌐 Локальный режим', 3000);
+  }
+}
+
+// ============ 4. ПОКАЗ СООБЩЕНИЙ ============
+function showMessage(text, timeout = 5000) {
+  // Удаляем старое
+  const oldMsg = document.getElementById('famq-msg');
+  if (oldMsg) oldMsg.remove();
+  
+  // Создаем новое
+  const msg = document.createElement('div');
+  msg.id = 'famq-msg';
+  msg.textContent = text;
+  msg.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    z-index: 9999;
+  `;
+  
+  document.body.appendChild(msg);
+  
+  // Автоудаление
+  setTimeout(() => {
+    if (msg.parentNode) {
+      msg.style.opacity = '0';
+      msg.style.transition = 'opacity 0.5s';
+      setTimeout(() => msg.remove(), 500);
+    }
+  }, timeout);
+}
+
+// ============ 5. ДОПОЛНИТЕЛЬНАЯ КНОПКА ============
+window.addEventListener('load', function() {
+  const hiddenBtn = document.createElement('button');
+  hiddenBtn.innerHTML = '👁️';
+  hiddenBtn.title = 'Сохраненные заявки';
+  hiddenBtn.style.cssText = `
+    position: fixed;
+    bottom: 70px;
+    right: 20px;
+    background: #666;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 9998;
+    opacity: 0.3;
+  `;
+  
+  hiddenBtn.onclick = function() {
+    const apps = JSON.parse(localStorage.getItem('famq_apps') || '[]');
+    if (apps.length === 0) {
+      alert('Нет сохраненных заявок');
+    } else {
+      alert(`Сохранено заявок: ${apps.length}\n\nПоследняя: ${apps[apps.length-1].nickname}`);
+    }
+  };
+  
+  document.body.appendChild(hiddenBtn);
+});
+</script>
 
 </body>
 </html>
