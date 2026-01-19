@@ -7,193 +7,75 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
  <script>
-// ============ GOOGLE SHEETS API CONFIG ============
-const API_URL = 'https://script.google.com/macros/s/AKfycbyiQYieimdbaC7XomE1_Be-oLkM6aaNTjkvVgWvc4o40y4XmHx5XM-k4MDKH0OMcl31/exec';
+// ============ РАБОЧИЙ API КЛИЕНТ ============
+const API_URL = 'https://script.google.com/macros/s/AKfycbwQz-SLXjjMyhLaPh_ix3c3JKZOgSpVxdfk_PaDfLk46DaRSdcxndG9MlFVwvuHiLDM/exec';
 
-// ============ УПРОЩЕННЫЙ API КЛИЕНТ БЕЗ ОШИБОК ============
-window.db = {
-  async initialize() {
-    return await this.request('initialize', {});
-  },
+// Простой тест
+async function testConnection() {
+  console.log('🔧 Тестируем подключение...');
   
-  async request(action, data = {}) {
+  // Вариант 1: GET запрос
+  try {
+    const response = await fetch(`${API_URL}?action=test`);
+    const data = await response.json();
+    console.log('✅ Ответ от API:', data);
+    alert('✅ API работает: ' + data.message);
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка:', error);
+    
+    // Вариант 2: Через FormData
     try {
-      console.log('📤 Отправка запроса:', action, data);
+      const formData = new FormData();
+      formData.append('action', 'test');
       
       const response = await fetch(API_URL, {
         method: 'POST',
-        mode: 'no-cors', // Важно для Google Apps Script
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: action,
-          ...data
-        })
+        body: formData,
+        mode: 'no-cors'
       });
       
-      // Для no-cors mode
-      if (response.type === 'opaque') {
-        console.log('✅ Запрос отправлен (no-cors mode)');
-        return { success: true, data: { message: 'Запрос отправлен' } };
-      }
-      
-      const result = await response.json();
-      console.log('📥 Ответ:', result);
-      return result;
-      
-    } catch (error) {
-      console.error('❌ Ошибка запроса:', error);
-      return {
-        success: false,
-        error: error.message,
-        data: null
-      };
+      alert('🔄 Отправлен POST запрос (проверь консоль Google Apps Script)');
+      return true;
+    } catch (error2) {
+      console.error('❌ И это не работает:', error2);
+      alert('❌ Не удалось подключиться к API');
+      return false;
     }
-  },
-  
-  async getAllData() {
-    const result = await this.request('getAll', {});
-    return result.success ? result.data : {};
-  },
-  
-  async get(sheet, options = {}) {
-    const params = { sheet: sheet };
-    if (options.id) params.id = options.id;
-    return await this.request('get', params);
-  },
-  
-  async add(sheet, data) {
-    return await this.request('add', { sheet: sheet, data: data });
-  },
-  
-  async update(sheet, id, updates) {
-    return await this.request('update', { sheet: sheet, id: id, data: updates });
-  },
-  
-  async delete(sheet, id) {
-    return await this.request('delete', { sheet: sheet, id: id });
   }
-};
+}
 
-// ============ ИНИЦИАЛИЗАЦИЯ ============
-document.addEventListener('DOMContentLoaded', async function() {
-  console.log('🚀 Continental FamQ загружается...');
+// Инициализация сайта
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Continental FamQ запущен');
   
-  // Создаем уведомление если функция не существует
-  if (typeof showNotification !== 'function') {
-    window.showNotification = function(type, message) {
-      console.log(`[${type.toUpperCase()}] ${message}`);
-      alert(message); // Просто показываем alert
-    };
-  }
+  // Показываем что сайт работает
+  document.body.innerHTML += `
+    <div style="position: fixed; bottom: 10px; right: 10px; background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
+      ✅ Сайт загружен
+    </div>
+  `;
   
-  showNotification('info', 'Инициализация системы...');
-  
-  // Даем время на загрузку страницы
-  setTimeout(async () => {
-    try {
-      console.log('🧪 Тестируем API...');
-      
-      // Прямой тест API
-      const testResponse = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ action: 'initialize' })
-      });
-      
-      if (testResponse.ok) {
-        const testResult = await testResponse.json();
-        console.log('✅ API тест:', testResult);
-        
-        if (testResult.success) {
-          showNotification('success', '✅ Система готова!');
-          
-          // Инициализируем базу данных
-          await db.initialize();
-          
-          // Запускаем остальные системы
-          setTimeout(() => {
-            if (window.initAuthSystem) initAuthSystem();
-            if (window.initNavigation) initNavigation();
-            if (window.loadBlacklist) loadBlacklist();
-            if (window.loadNews) loadNews();
-            if (window.loadApplications) loadApplications();
-            
-            console.log('🎮 Continental FamQ запущен!');
-          }, 1000);
-          
-        } else {
-          console.error('❌ API вернул ошибку:', testResult);
-          showNotification('error', 'Ошибка API: ' + (testResult.data?.error || 'Неизвестная ошибка'));
-        }
-      } else {
-        console.error('❌ HTTP ошибка:', testResponse.status);
-        showNotification('error', 'Ошибка соединения с сервером');
-      }
-      
-    } catch (error) {
-      console.error('❌ Ошибка инициализации:', error);
-      showNotification('warning', 'Используем локальный режим. Google Sheets недоступен.');
-      
-      // Используем localStorage как fallback
-      if (!localStorage.getItem('familyRoleCodes')) {
-        localStorage.setItem('familyRoleCodes', JSON.stringify([]));
-      }
-      
-      if (!localStorage.getItem('developerCodeUsage')) {
-        localStorage.setItem('developerCodeUsage', JSON.stringify({
-          maxUses: 2,
-          usedBy: []
-        }));
-      }
-      
-      // Все равно запускаем системы
-      setTimeout(() => {
-        if (window.initAuthSystem) initAuthSystem();
-        if (window.initNavigation) initNavigation();
-        console.log('🎮 Continental FamQ запущен в локальном режиме!');
-      }, 1000);
-    }
-  }, 1000);
+  // Тестируем через 2 секунды
+  setTimeout(() => {
+    testConnection();
+  }, 2000);
 });
 
-// ============ ГЛОБАЛЬНЫЕ ФУНКЦИИ ============
-// Функция тестирования API
-window.testAPI = async function() {
-  console.log('🔧 Тестирование API...');
-  try {
-    const result = await db.request('getAll', {});
-    console.log('Результат теста:', result);
-    alert(result.success ? '✅ API работает!' : '❌ Ошибка API: ' + result.error);
-    return result.success;
-  } catch (error) {
-    console.error('Ошибка теста:', error);
-    alert('❌ Ошибка теста API: ' + error.message);
-    return false;
-  }
-};
-
-// Функция для установки Developer кода
-window.setDeveloperCode = function(code) {
-  if (!code || typeof code !== 'string') {
-    console.error('❌ Неверный код');
-    alert('❌ Неверный код');
-    return false;
-  }
+// Экспортируем функции
+window.db = {
+  test: testConnection,
   
-  window.developerCodeFromConsole = code.toUpperCase();
-  console.log('✅ Developer код установлен:', window.developerCodeFromConsole);
-  alert('✅ Developer код установлен: ' + window.developerCodeFromConsole);
-  return true;
+  async getAll() {
+    try {
+      const response = await fetch(`${API_URL}?action=getAll`);
+      return await response.json();
+    } catch (error) {
+      console.error('Ошибка:', error);
+      return {success: false, error: error.message};
+    }
+  }
 };
-
-console.log('⚡ Continental FamQ загружен!');
-console.log('📝 Команды в консоли:');
-console.log('   testAPI() - проверить работу API');
-console.log('   setDeveloperCode("ВАШ_КОД") - установить Developer код');
 </script>
     
     <style>
