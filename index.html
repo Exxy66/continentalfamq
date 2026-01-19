@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Continental FamQ | Главная</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-
-    
     <style>
         /* Все существующие стили остаются */
         * {
@@ -2035,7 +2032,7 @@
             <a href="#home" class="nav-link active" data-page="home">Главная</a>
             <a href="#join" class="nav-link" data-page="join">Вступить</a>
             <a href="#applications" class="nav-link" data-page="applications" id="applicationsNavLink" style="display: none;">Заявки</a>
-            <a href="#news" class="nav-link" data-page="news" id="newsNavLink">Новости</a>
+            <a href="#news" class="nav-link" data-page="news" id="newsNavLink">Новости</a> <!-- Изменено: теперь всегда видно -->
             <a href="#chat" class="nav-link" data-page="chat" id="chatNavLink" style="display: none;">Чат</a>
             <a href="#media" class="nav-link" data-page="media">Медиа</a>
             <a href="#blacklist" class="nav-link" data-page="blacklist">Черный список</a>
@@ -2714,111 +2711,105 @@
         // === СИСТЕМА АВТОРИЗАЦИИ И РОЛЕЙ ===
         
         // Инициализация хранилища
-        async function initAuthSystem() {
-            try {
-                // Пробуем инициализировать базу данных
-                await db.initialize();
-                
-                // Загружаем данные из Google Sheets
-                const allData = await db.getAllData();
-                
-                // Если нет данных в Google Sheets, инициализируем локальное хранилище
-                if (!allData.users || allData.users.length === 0) {
-                    console.log('Google Sheets пуст, инициализируем локальное хранилище');
-                    
-                    // Инициализация использования Developer кода
-                    const defaultSettings = {
-                        developer_code_uses: '{"maxUses": 2, "usedBy": []}'
-                    };
-                    
-                    await db.add('settings', { key: 'developer_code_uses', value: '{"maxUses": 2, "usedBy": []}' });
-                    
-                    // Инициализация пользователей
-                    const defaultUsers = [
-                        {
-                            discord_id: '913464996267180092',
-                            username: 'exxy66',
-                            avatar: '',
-                            role: 'developer',
-                            created_at: new Date().toISOString(),
-                            last_login: new Date().toISOString()
-                        }
-                    ];
-                    
-                    for (const user of defaultUsers) {
-                        await db.add('users', user);
+        function initAuthSystem() {
+            // Инициализация использования Developer кода (максимум 2 использования)
+            if (!localStorage.getItem('developerCodeUsage')) {
+                localStorage.setItem('developerCodeUsage', JSON.stringify({
+                    maxUses: 2,
+                    usedBy: []
+                }));
+            }
+            
+            // Инициализация пользователей
+            if (!localStorage.getItem('familyUsers')) {
+                const defaultUsers = [
+                    {
+                        id: 1,
+                        discordId: '913464996267180092',
+                        username: 'exxy66',
+                        avatar: '',
+                        role: 'developer',
+                        createdAt: new Date().toISOString(),
+                        lastLogin: null,
+                        notifications: []
                     }
-                    
-                    // Инициализация ролей
-                    const defaultRoles = [
-                        {
-                            key: 'admin',
-                            name: 'Администратор',
-                            color: '#9C27B0',
-                            permissions: '["view_blacklist","add_blacklist","remove_blacklist","manage_users","manage_roles","generate_codes","view_admin_panel","edit_content","create_news","manage_applications","manage_chat","view_news"]',
-                            sort_order: 0,
-                            description: 'Полный доступ ко всем функциям системы'
-                        },
-                        {
-                            key: 'developer',
-                            name: 'Разработчик',
-                            color: '#9B59B6',
-                            permissions: '["view_blacklist","add_blacklist","remove_blacklist","view_admin_panel","edit_content","create_news","manage_applications","manage_chat","view_news"]',
-                            sort_order: 1,
-                            description: 'Разработчик системы с особыми правами'
-                        },
-                        {
-                            key: 'moderator',
-                            name: 'Модератор',
-                            color: '#00BCD4',
-                            permissions: '["view_blacklist","add_blacklist","remove_blacklist","manage_applications","manage_chat","view_news"]',
-                            sort_order: 2,
-                            description: 'Модератор системы'
-                        },
-                        {
-                            key: 'member',
-                            name: 'Участник',
-                            color: '#4CAF50',
-                            permissions: '["view_blacklist","view_news"]',
-                            sort_order: 3,
-                            description: 'Обычный участник семьи'
-                        },
-                        {
-                            key: 'guest',
-                            name: 'Гость',
-                            color: '#607D8B',
-                            permissions: '["view_news"]',
-                            sort_order: 4,
-                            description: 'Гостевой доступ'
-                        }
-                    ];
-                    
-                    for (const role of defaultRoles) {
-                        await db.add('roles', role);
+                ];
+                localStorage.setItem('familyUsers', JSON.stringify(defaultUsers));
+                localStorage.setItem('familyUserIdCounter', '2');
+            }
+            
+            // Инициализация ролей
+            if (!localStorage.getItem('familyRoles')) {
+                const defaultRoles = [
+                    {
+                        key: 'admin',
+                        name: 'Администратор',
+                        color: '#9C27B0',
+                        order: 0,
+                        permissions: ['view_blacklist', 'add_blacklist', 'remove_blacklist', 'manage_users', 'manage_roles', 'generate_codes', 'view_admin_panel', 'edit_content', 'create_news', 'manage_applications', 'manage_chat', 'view_news'],
+                        description: 'Полный доступ ко всем функциям системы'
+                    },
+                    {
+                        key: 'developer',
+                        name: 'Разработчик',
+                        color: '#9B59B6',
+                        order: 1,
+                        permissions: ['view_blacklist', 'add_blacklist', 'remove_blacklist', 'view_admin_panel', 'edit_content', 'create_news', 'manage_applications', 'manage_chat', 'view_news'],
+                        description: 'Разработчик системы с особыми правами'
+                    },
+                    {
+                        key: 'moderator',
+                        name: 'Модератор',
+                        color: '#00BCD4',
+                        order: 2,
+                        permissions: ['view_blacklist', 'add_blacklist', 'remove_blacklist', 'manage_applications', 'manage_chat', 'view_news'],
+                        description: 'Модератор системы'
+                    },
+                    {
+                        key: 'member',
+                        name: 'Участник',
+                        color: '#4CAF50',
+                        order: 3,
+                        permissions: ['view_blacklist', 'view_news'],
+                        description: 'Обычный участник семьи'
+                    },
+                    {
+                        key: 'guest',
+                        name: 'Гость',
+                        color: '#607D8B',
+                        order: 4,
+                        permissions: ['view_news'],
+                        description: 'Гостевой доступ'
                     }
-                    
-                    // Инициализация кодов ролей
-                    localStorage.setItem('familyRoleCodes', JSON.stringify([]));
-                    
-                } else {
-                    console.log('Данные загружены из Google Sheets');
-                }
-                
-            } catch (error) {
-                console.error('Ошибка инициализации:', error);
-                console.log('Используем локальное хранилище как fallback');
-                
-                // Fallback на локальное хранилище
-                if (!localStorage.getItem('developerCodeUsage')) {
-                    localStorage.setItem('developerCodeUsage', JSON.stringify({
-                        maxUses: 2,
-                        usedBy: []
-                    }));
-                }
-                
-                if (!localStorage.getItem('familyRoleCodes')) {
-                    localStorage.setItem('familyRoleCodes', JSON.stringify([]));
-                }
+                ];
+                localStorage.setItem('familyRoles', JSON.stringify(defaultRoles));
+            }
+            
+            // Инициализация кодов ролей
+            if (!localStorage.getItem('familyRoleCodes')) {
+                localStorage.setItem('familyRoleCodes', JSON.stringify([]));
+            }
+            
+            // Инициализация заявок
+            if (!localStorage.getItem('familyApplications')) {
+                localStorage.setItem('familyApplications', JSON.stringify([]));
+                localStorage.setItem('familyApplicationIdCounter', '1');
+            }
+            
+            // Инициализация новостей
+            if (!localStorage.getItem('familyNews')) {
+                localStorage.setItem('familyNews', JSON.stringify([]));
+                localStorage.setItem('familyNewsIdCounter', '1');
+            }
+            
+            // Инициализация чата
+            if (!localStorage.getItem('familyChat')) {
+                localStorage.setItem('familyChat', JSON.stringify([]));
+            }
+            
+            // Инициализация черного списка
+            if (!localStorage.getItem('familyBlacklist')) {
+                localStorage.setItem('familyBlacklist', JSON.stringify([]));
             }
             
             // Проверяем авторизацию через Discord из URL hash
@@ -2848,7 +2839,7 @@
                 
                 if (response.ok) {
                     const userData = await response.json();
-                    await loginWithDiscordData(userData, accessToken);
+                    loginWithDiscordData(userData, accessToken);
                 }
             } catch (error) {
                 console.error('Ошибка получения данных Discord:', error);
@@ -2857,57 +2848,44 @@
         }
 
         // Авторизация с данными Discord
-        async function loginWithDiscordData(discordUser, accessToken) {
-            try {
-                // Ищем пользователя в Google Sheets
-                const users = await db.get('users', { filter: { discord_id: discordUser.id } });
+        function loginWithDiscordData(discordUser, accessToken) {
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            const userDiscordId = discordUser.id;
+            
+            let user = users.find(u => u.discordId === userDiscordId);
+            
+            if (!user) {
+                user = {
+                    id: parseInt(localStorage.getItem('familyUserIdCounter')) || users.length + 1,
+                    discordId: userDiscordId,
+                    username: discordUser.username,
+                    avatar: discordUser.avatar ? 
+                        `https://cdn.discordapp.com/avatars/${userDiscordId}/${discordUser.avatar}.png` : 
+                        `https://cdn.discordapp.com/embed/avatars/${discordUser.discriminator % 5}.png`,
+                    role: 'guest',
+                    createdAt: new Date().toISOString(),
+                    lastLogin: new Date().toISOString(),
+                    notifications: [],
+                    accessToken: accessToken
+                };
                 
-                let user;
-                
-                if (users.length === 0) {
-                    // Создаем нового пользователя
-                    const newUser = {
-                        discord_id: discordUser.id,
-                        username: discordUser.username,
-                        avatar: discordUser.avatar ? 
-                            `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : 
-                            `https://cdn.discordapp.com/embed/avatars/${discordUser.discriminator % 5}.png`,
-                        role: 'guest',
-                        created_at: new Date().toISOString(),
-                        last_login: new Date().toISOString(),
-                        access_token: accessToken,
-                        notifications: '[]'
-                    };
-                    
-                    const result = await db.add('users', newUser);
-                    user = result.data;
-                    user.id = result.id;
-                    
-                } else {
-                    // Обновляем существующего пользователя
-                    user = users[0];
-                    const updates = {
-                        username: discordUser.username,
-                        avatar: discordUser.avatar ? 
-                            `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : 
-                            `https://cdn.discordapp.com/embed/avatars/${discordUser.discriminator % 5}.png`,
-                        last_login: new Date().toISOString(),
-                        access_token: accessToken
-                    };
-                    
-                    await db.update('users', user.id, updates);
-                    user = { ...user, ...updates };
-                }
-                
-                localStorage.setItem('familyCurrentUser', JSON.stringify(user));
-                updateAuthUI();
-                
-                showNotification('success', `Добро пожаловать, ${user.username}!`);
-                
-            } catch (error) {
-                console.error('Ошибка авторизации:', error);
-                showNotification('error', 'Ошибка при авторизации');
+                users.push(user);
+                localStorage.setItem('familyUsers', JSON.stringify(users));
+                localStorage.setItem('familyUserIdCounter', (user.id + 1).toString());
+            } else {
+                user.username = discordUser.username;
+                user.avatar = discordUser.avatar ? 
+                    `https://cdn.discordapp.com/avatars/${userDiscordId}/${discordUser.avatar}.png` : 
+                    `https://cdn.discordapp.com/embed/avatars/${discordUser.discriminator % 5}.png`;
+                user.lastLogin = new Date().toISOString();
+                user.accessToken = accessToken;
+                localStorage.setItem('familyUsers', JSON.stringify(users));
             }
+            
+            localStorage.setItem('familyCurrentUser', user.id);
+            updateAuthUI();
+            
+            showNotification('success', `Добро пожаловать, ${user.username}!`);
         }
 
         // Авторизация через Discord
@@ -2917,66 +2895,45 @@
 
         // Получить текущего пользователя
         function getCurrentUser() {
-            const userStr = localStorage.getItem('familyCurrentUser');
-            if (!userStr) return null;
+            const userId = localStorage.getItem('familyCurrentUser');
+            if (!userId) return null;
             
-            try {
-                return JSON.parse(userStr);
-            } catch (e) {
-                return null;
-            }
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            return users.find(user => user.id === parseInt(userId));
         }
 
         // Получить все роли (отсортированные по порядку)
-        async function getAllRoles() {
-            try {
-                const roles = await db.get('roles');
-                return roles.sort((a, b) => a.sort_order - b.sort_order);
-            } catch (error) {
-                console.error('Ошибка загрузки ролей:', error);
-                return [];
-            }
+        function getAllRoles() {
+            const roles = JSON.parse(localStorage.getItem('familyRoles') || '[]');
+            return roles.sort((a, b) => a.order - b.order);
         }
 
         // Получить роль по ключу
-        async function getRoleByKey(key) {
-            const roles = await getAllRoles();
+        function getRoleByKey(key) {
+            const roles = getAllRoles();
             return roles.find(role => role.key === key);
         }
 
         // Получить роль пользователя
-        async function getUserRole(user) {
-            if (!user || !user.role) return await getRoleByKey('guest');
-            return await getRoleByKey(user.role) || await getRoleByKey('guest');
+        function getUserRole(user) {
+            if (!user || !user.role) return getRoleByKey('guest');
+            return getRoleByKey(user.role) || getRoleByKey('guest');
         }
 
         // Проверить разрешение
-        async function hasPermission(permission) {
+        function hasPermission(permission) {
             const user = getCurrentUser();
             if (!user) {
                 if (permission === 'view_news') return true;
                 return false;
             }
             
-            const role = await getUserRole(user);
-            if (!role || !role.permissions) return false;
-            
-            let permissions = [];
-            try {
-                if (typeof role.permissions === 'string') {
-                    permissions = JSON.parse(role.permissions);
-                } else if (Array.isArray(role.permissions)) {
-                    permissions = role.permissions;
-                }
-            } catch (e) {
-                console.error('Ошибка парсинга permissions:', e);
-            }
-            
-            return permissions.includes(permission);
+            const role = getUserRole(user);
+            return role.permissions.includes(permission);
         }
 
         // Обновить UI авторизации
-        async function updateAuthUI() {
+        function updateAuthUI() {
             const user = getCurrentUser();
             const authButtons = document.getElementById('authButtons');
             const userMenu = document.getElementById('userMenu');
@@ -2993,7 +2950,7 @@
                 userMenu.style.display = 'flex';
                 
                 document.getElementById('currentUsername').textContent = user.username;
-                const role = await getUserRole(user);
+                const role = getUserRole(user);
                 document.getElementById('currentUserRole').textContent = role.name;
                 
                 const roleBadge = document.getElementById('currentRoleBadge');
@@ -3017,39 +2974,45 @@
                 }
                 
                 // Проверяем использование Developer кода
-                try {
-                    const devCodeUsage = await getDeveloperCodeUsage();
-                    const hasUsedDevCode = devCodeUsage.usedBy.some(u => u.userId === user.id);
-                    
-                    // Скрываем кнопку Developer кода если пользователь уже использовал ее или является Developer
-                    if (user.role === 'developer' || hasUsedDevCode) {
-                        developerCodeBtn.style.display = 'none';
-                    } else {
-                        developerCodeBtn.style.display = 'inline-block';
-                    }
-                    
-                    // Показываем кнопку "Ввести код" только для Developer
-                    if (user.role === 'developer') {
-                        enterCodeBtn.style.display = 'inline-block';
-                    } else {
-                        enterCodeBtn.style.display = 'none';
-                    }
-                    
-                } catch (error) {
-                    console.error('Ошибка проверки Developer кода:', error);
+                const devCodeUsage = JSON.parse(localStorage.getItem('developerCodeUsage') || '{"usedBy": []}');
+                const hasUsedDevCode = devCodeUsage.usedBy.some(u => u.userId === user.id);
+                
+                // Скрываем кнопку Developer кода если пользователь уже использовал ее или является Developer
+                if (user.role === 'developer' || hasUsedDevCode) {
+                    developerCodeBtn.style.display = 'none';
+                } else {
+                    developerCodeBtn.style.display = 'inline-block';
                 }
                 
-                // Проверяем разрешения
-                const hasAdminPanel = await hasPermission('view_admin_panel');
-                const hasManageApplications = await hasPermission('manage_applications');
-                const hasCreateNews = await hasPermission('create_news');
-                const hasManageChat = await hasPermission('manage_chat');
+                // Показываем кнопку "Ввести код" только для Developer
+                if (user.role === 'developer') {
+                    enterCodeBtn.style.display = 'inline-block';
+                } else {
+                    enterCodeBtn.style.display = 'none';
+                }
                 
-                adminNavLink.style.display = hasAdminPanel ? 'flex' : 'none';
-                applicationsNavLink.style.display = hasManageApplications ? 'flex' : 'none';
-                newsNavLink.style.display = 'flex'; // Новости видны всем
-                createNewsBtn.style.display = hasCreateNews ? 'inline-block' : 'none';
-                chatNavLink.style.display = hasManageChat ? 'flex' : 'none';
+                if (hasPermission('view_admin_panel')) {
+                    adminNavLink.style.display = 'flex';
+                } else {
+                    adminNavLink.style.display = 'none';
+                }
+                
+                if (hasPermission('manage_applications')) {
+                    applicationsNavLink.style.display = 'flex';
+                } else {
+                    applicationsNavLink.style.display = 'none';
+                }
+                
+                // Новости видны всем
+                newsNavLink.style.display = 'flex';
+                
+                if (hasPermission('create_news')) {
+                    createNewsBtn.style.display = 'inline-block';
+                } else {
+                    createNewsBtn.style.display = 'none';
+                }
+                
+                chatNavLink.style.display = hasPermission('manage_chat') ? 'flex' : 'none';
                 
             } else {
                 authButtons.style.display = 'flex';
@@ -3069,68 +3032,28 @@
             loadUserNotifications();
         }
 
-        // Получить использование Developer кода
-        async function getDeveloperCodeUsage() {
-            try {
-                const settings = await db.get('settings', { filter: { key: 'developer_code_uses' } });
-                if (settings && settings.value) {
-                    return JSON.parse(settings.value);
-                }
-            } catch (error) {
-                console.error('Ошибка получения Developer кода:', error);
-            }
-            
-            // Fallback на localStorage
-            const fallback = localStorage.getItem('developerCodeUsage');
-            if (fallback) {
-                return JSON.parse(fallback);
-            }
-            
-            return { maxUses: 2, usedBy: [] };
-        }
-
-        // Обновить использование Developer кода
-        async function updateDeveloperCodeUsage(usage) {
-            try {
-                const settings = await db.get('settings', { filter: { key: 'developer_code_uses' } });
-                if (settings) {
-                    await db.update('settings', settings.id, { value: JSON.stringify(usage) });
-                } else {
-                    await db.add('settings', { key: 'developer_code_uses', value: JSON.stringify(usage) });
-                }
-            } catch (error) {
-                console.error('Ошибка обновления Developer кода:', error);
-                // Fallback на localStorage
-                localStorage.setItem('developerCodeUsage', JSON.stringify(usage));
-            }
-        }
-
         // Обновить отображение информации о Developer коде
-        async function updateDeveloperCodeDisplay() {
-            try {
-                const devCodeUsage = await getDeveloperCodeUsage();
-                const usedCount = devCodeUsage.usedBy.length;
-                const remainingUses = devCodeUsage.maxUses - usedCount;
-                
-                document.getElementById('remainingUses').textContent = remainingUses;
-                
-                // Показываем код из консоли если он есть
-                const codeDisplay = document.getElementById('developerCodeDisplay');
-                if (developerCodeFromConsole) {
-                    codeDisplay.textContent = developerCodeFromConsole;
-                    codeDisplay.style.color = '#2ecc71'; // Зеленый для кода из консоли
-                } else {
-                    codeDisplay.textContent = "CFAMQ-DEV-2026-XYZZY";
-                    codeDisplay.style.color = 'var(--accent-color)';
-                }
-                
-                // Скрываем кнопку если использований не осталось
-                const developerCodeBtn = document.getElementById('developerCodeBtn');
-                if (remainingUses <= 0) {
-                    developerCodeBtn.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Ошибка обновления отображения кода:', error);
+        function updateDeveloperCodeDisplay() {
+            const devCodeUsage = JSON.parse(localStorage.getItem('developerCodeUsage') || '{"usedBy": [], "maxUses": 2}');
+            const usedCount = devCodeUsage.usedBy.length;
+            const remainingUses = devCodeUsage.maxUses - usedCount;
+            
+            document.getElementById('remainingUses').textContent = remainingUses;
+            
+            // Показываем код из консоли если он есть
+            const codeDisplay = document.getElementById('developerCodeDisplay');
+            if (developerCodeFromConsole) {
+                codeDisplay.textContent = developerCodeFromConsole;
+                codeDisplay.style.color = '#2ecc71'; // Зеленый для кода из консоли
+            } else {
+                codeDisplay.textContent = "CFAMQ-DEV-2026-XYZZY";
+                codeDisplay.style.color = 'var(--accent-color)';
+            }
+            
+            // Скрываем кнопку если использований не осталось
+            const developerCodeBtn = document.getElementById('developerCodeBtn');
+            if (remainingUses <= 0) {
+                developerCodeBtn.style.display = 'none';
             }
         }
 
@@ -3143,35 +3066,30 @@
         }
 
         // Открыть модальное окно Developer кода
-        async function openDeveloperCodeModal() {
-            try {
-                const devCodeUsage = await getDeveloperCodeUsage();
-                const remainingUses = devCodeUsage.maxUses - devCodeUsage.usedBy.length;
-                
-                if (remainingUses <= 0) {
-                    showNotification('error', 'Developer код уже использован максимальное количество раз');
-                    return;
-                }
-                
-                const currentUser = getCurrentUser();
-                if (!currentUser) {
-                    showNotification('error', 'Войдите в систему через Discord');
-                    return;
-                }
-                
-                // Проверяем, не использовал ли уже этот пользователь код
-                const hasUsed = devCodeUsage.usedBy.some(u => u.userId === currentUser.id);
-                if (hasUsed) {
-                    showNotification('error', 'Вы уже использовали Developer код');
-                    return;
-                }
-                
-                document.getElementById('developerCodeModal').classList.add('active');
-                updateDeveloperCodeDisplay();
-            } catch (error) {
-                console.error('Ошибка открытия модального окна:', error);
-                showNotification('error', 'Ошибка открытия модального окна');
+        function openDeveloperCodeModal() {
+            const devCodeUsage = JSON.parse(localStorage.getItem('developerCodeUsage') || '{"usedBy": [], "maxUses": 2}');
+            const remainingUses = devCodeUsage.maxUses - devCodeUsage.usedBy.length;
+            
+            if (remainingUses <= 0) {
+                showNotification('error', 'Developer код уже использован максимальное количество раз');
+                return;
             }
+            
+            const currentUser = getCurrentUser();
+            if (!currentUser) {
+                showNotification('error', 'Войдите в систему через Discord');
+                return;
+            }
+            
+            // Проверяем, не использовал ли уже этот пользователь код
+            const hasUsed = devCodeUsage.usedBy.some(u => u.userId === currentUser.id);
+            if (hasUsed) {
+                showNotification('error', 'Вы уже использовали Developer код');
+                return;
+            }
+            
+            document.getElementById('developerCodeModal').classList.add('active');
+            updateDeveloperCodeDisplay();
         }
 
         // Закрыть модальное окно Developer кода
@@ -3181,7 +3099,7 @@
         }
 
         // Использовать Developer код
-        async function useDeveloperCode() {
+        function useDeveloperCode() {
             const codeInput = document.getElementById('developerCode').value.trim().toUpperCase();
             const currentUser = getCurrentUser();
             
@@ -3202,44 +3120,44 @@
                 return;
             }
             
-            try {
-                const devCodeUsage = await getDeveloperCodeUsage();
-                const usedCount = devCodeUsage.usedBy.length;
-                const remainingUses = devCodeUsage.maxUses - usedCount;
-                
-                if (remainingUses <= 0) {
-                    showNotification('error', 'Developer код уже был использован максимальное количество раз');
-                    closeDeveloperCodeModal();
-                    return;
-                }
-                
-                // Проверяем, не активировал ли уже этот пользователь код
-                const hasUsed = devCodeUsage.usedBy.some(u => u.userId === currentUser.id);
-                if (hasUsed) {
-                    showNotification('error', 'Вы уже активировали Developer код ранее');
-                    closeDeveloperCodeModal();
-                    return;
-                }
-                
-                // Проверяем код:
-                // 1. Любой код из консоли работает
-                // 2. Код из интерфейса "CFAMQ-DEV-2026-XYZZY" тоже работает
-                // 3. Любой код, начинающийся на "DEV-" тоже работает
-                const isConsoleCode = developerCodeFromConsole && codeInput === developerCodeFromConsole;
-                const isInterfaceCode = codeInput === "CFAMQ-DEV-2026-XYZZY";
-                const isDevCode = codeInput.startsWith("DEV-");
-                
-                if (!isConsoleCode && !isInterfaceCode && !isDevCode) {
-                    showNotification('error', 'Неверный Developer код');
-                    return;
-                }
-                
-                // Обновляем роль пользователя в Google Sheets
-                await db.update('users', currentUser.id, { role: 'developer' });
-                
-                // Обновляем локальное хранилище
-                currentUser.role = 'developer';
-                localStorage.setItem('familyCurrentUser', JSON.stringify(currentUser));
+            const devCodeUsage = JSON.parse(localStorage.getItem('developerCodeUsage') || '{"usedBy": [], "maxUses": 2}');
+            const usedCount = devCodeUsage.usedBy.length;
+            const remainingUses = devCodeUsage.maxUses - usedCount;
+            
+            if (remainingUses <= 0) {
+                showNotification('error', 'Developer код уже был использован максимальное количество раз');
+                closeDeveloperCodeModal();
+                return;
+            }
+            
+            // Проверяем, не активировал ли уже этот пользователь код
+            const hasUsed = devCodeUsage.usedBy.some(u => u.userId === currentUser.id);
+            if (hasUsed) {
+                showNotification('error', 'Вы уже активировали Developer код ранее');
+                closeDeveloperCodeModal();
+                return;
+            }
+            
+            // Проверяем код:
+            // 1. Любой код из консоли работает
+            // 2. Код из интерфейса "CFAMQ-DEV-2026-XYZZY" тоже работает
+            // 3. Любой код, начинающийся на "DEV-" тоже работает
+            const isConsoleCode = developerCodeFromConsole && codeInput === developerCodeFromConsole;
+            const isInterfaceCode = codeInput === "CFAMQ-DEV-2026-XYZZY";
+            const isDevCode = codeInput.startsWith("DEV-");
+            
+            if (!isConsoleCode && !isInterfaceCode && !isDevCode) {
+                showNotification('error', 'Неверный Developer код');
+                return;
+            }
+            
+            // Обновляем роль пользователя
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            
+            if (userIndex !== -1) {
+                users[userIndex].role = 'developer';
+                localStorage.setItem('familyUsers', JSON.stringify(users));
                 
                 // Сохраняем информацию об использовании кода
                 devCodeUsage.usedBy.push({
@@ -3248,10 +3166,10 @@
                     codeUsed: codeInput,
                     timestamp: new Date().toISOString()
                 });
-                
-                await updateDeveloperCodeUsage(devCodeUsage);
+                localStorage.setItem('developerCodeUsage', JSON.stringify(devCodeUsage));
                 
                 // Обновляем UI
+                localStorage.setItem('familyCurrentUser', currentUser.id);
                 updateAuthUI();
                 closeDeveloperCodeModal();
                 
@@ -3262,10 +3180,6 @@
                 setTimeout(() => {
                     alert('🎉 ПОЗДРАВЛЯЕМ!\n\nВы получили роль Developer!\n\nТеперь вам доступны:\n1. Панель управления\n2. Создание новостей\n3. Управление заявками\n4. Управление черным списком\n5. Генерация кодов для других ролей');
                 }, 500);
-                
-            } catch (error) {
-                console.error('Ошибка использования кода:', error);
-                showNotification('error', 'Ошибка при использовании кода');
             }
         }
 
@@ -3281,7 +3195,7 @@
         }
 
         // Использовать код роли
-        async function useRoleCode() {
+        function useRoleCode() {
             const code = document.getElementById('roleCode').value.trim();
             const user = getCurrentUser();
             
@@ -3295,7 +3209,6 @@
                 return;
             }
             
-            // Коды ролей пока хранятся в localStorage
             const roleCodes = JSON.parse(localStorage.getItem('familyRoleCodes') || '[]');
             const codeIndex = roleCodes.findIndex(rc => rc.code === code && !rc.used);
             
@@ -3305,7 +3218,7 @@
             }
             
             const roleCode = roleCodes[codeIndex];
-            const role = await getRoleByKey(roleCode.roleKey);
+            const role = getRoleByKey(roleCode.roleKey);
             
             if (!role) {
                 showNotification('error', 'Роль не найдена');
@@ -3317,12 +3230,13 @@
             roleCodes[codeIndex].usedBy = user.id;
             localStorage.setItem('familyRoleCodes', JSON.stringify(roleCodes));
             
-            // Обновляем роль пользователя в Google Sheets
-            await db.update('users', user.id, { role: roleCode.roleKey });
-            
-            // Обновляем локальное хранилище
-            user.role = roleCode.roleKey;
-            localStorage.setItem('familyCurrentUser', JSON.stringify(user));
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            const userIndex = users.findIndex(u => u.id === user.id);
+            if (userIndex !== -1) {
+                users[userIndex].role = roleCode.roleKey;
+                localStorage.setItem('familyUsers', JSON.stringify(users));
+                localStorage.setItem('familyCurrentUser', user.id);
+            }
             
             closeCodeInputModal();
             updateAuthUI();
@@ -3330,7 +3244,7 @@
         }
 
         // Генерация кода для роли
-        async function generateRoleCode() {
+        function generateRoleCode() {
             const roleSelect = document.getElementById('roleForCode');
             const roleKey = roleSelect.value;
             
@@ -3339,7 +3253,7 @@
                 return;
             }
             
-            const role = await getRoleByKey(roleKey);
+            const role = getRoleByKey(roleKey);
             if (!role) {
                 showNotification('error', 'Роль не найдена');
                 return;
@@ -3394,8 +3308,8 @@
             }
             
             let html = '<div class="codes-container">';
-            activeCodes.forEach(async (rc) => {
-                const role = await getRoleByKey(rc.roleKey);
+            activeCodes.forEach(rc => {
+                const role = getRoleByKey(rc.roleKey);
                 const createdDate = new Date(rc.createdAt);
                 
                 html += `
@@ -3406,7 +3320,7 @@
                         </div>
                         <div class="code-value">${rc.code}</div>
                         <div style="font-size: 0.9rem; color: var(--text-muted);">
-                            <div>Роль: <span style="color: ${role?.color || '#9B59B6'};">${role?.name || rc.roleName}</span></div>
+                            <div>Роль: <span style="color: ${role.color};">${role.name}</span></div>
                             <div>Создан: ${createdDate.toLocaleDateString()}</div>
                         </div>
                     </div>
@@ -3417,8 +3331,8 @@
         }
 
         // Обновить список ролей для выбора кода
-        async function updateRoleSelect() {
-            const roles = await getAllRoles();
+        function updateRoleSelect() {
+            const roles = getAllRoles();
             const select = document.getElementById('roleForCode');
             
             select.innerHTML = '<option value="" disabled selected>Выберите роль</option>';
@@ -3430,14 +3344,14 @@
         }
 
         // Открыть модальное окно роли
-        async function openRoleModal(roleKey = null) {
+        function openRoleModal(roleKey = null) {
             const modal = document.getElementById('roleModal');
             const title = document.getElementById('roleModalTitle');
             const form = document.getElementById('roleForm');
             
             if (roleKey) {
                 title.textContent = 'Редактировать роль';
-                const role = await getRoleByKey(roleKey);
+                const role = getRoleByKey(roleKey);
                 
                 document.getElementById('roleName').value = role.name;
                 document.getElementById('roleKey').value = role.key;
@@ -3446,19 +3360,8 @@
                 document.getElementById('roleColorPreview').style.background = role.color;
                 document.getElementById('roleDescription').value = role.description || '';
                 
-                let permissions = [];
-                try {
-                    if (typeof role.permissions === 'string') {
-                        permissions = JSON.parse(role.permissions);
-                    } else if (Array.isArray(role.permissions)) {
-                        permissions = role.permissions;
-                    }
-                } catch (e) {
-                    console.error('Ошибка парсинга permissions:', e);
-                }
-                
                 document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
-                    checkbox.checked = permissions.includes(checkbox.value);
+                    checkbox.checked = role.permissions.includes(checkbox.value);
                 });
                 
                 form.dataset.editRole = roleKey;
@@ -3480,7 +3383,7 @@
         }
 
         // Сохранить роль
-        async function saveRole() {
+        function saveRole() {
             const form = document.getElementById('roleForm');
             const roleName = document.getElementById('roleName').value.trim();
             const roleKey = document.getElementById('roleKey').value.trim();
@@ -3497,18 +3400,19 @@
                 permissions.push(checkbox.value);
             });
             
-            const roles = await getAllRoles();
+            const roles = getAllRoles();
             const isEdit = form.dataset.editRole;
             
             if (isEdit) {
-                const role = roles.find(r => r.key === isEdit);
-                if (role) {
-                    await db.update('roles', role.id, {
+                const roleIndex = roles.findIndex(r => r.key === isEdit);
+                if (roleIndex !== -1) {
+                    roles[roleIndex] = {
+                        ...roles[roleIndex],
                         name: roleName,
                         color: roleColor,
-                        permissions: JSON.stringify(permissions),
+                        permissions: permissions,
                         description: description
-                    });
+                    };
                 }
             } else {
                 if (roles.some(r => r.key === roleKey)) {
@@ -3516,18 +3420,19 @@
                     return;
                 }
                 
-                const maxOrder = Math.max(...roles.map(r => r.sort_order || 0));
+                const maxOrder = Math.max(...roles.map(r => r.order));
                 
-                await db.add('roles', {
+                roles.push({
                     key: roleKey,
                     name: roleName,
                     color: roleColor,
-                    sort_order: maxOrder + 1,
-                    permissions: JSON.stringify(permissions),
+                    order: maxOrder + 1,
+                    permissions: permissions,
                     description: description
                 });
             }
             
+            localStorage.setItem('familyRoles', JSON.stringify(roles));
             closeRoleModal();
             loadRolesTable();
             updateRoleSelect();
@@ -3535,8 +3440,8 @@
         }
 
         // Загрузить таблицу ролей с возможностью сортировки
-        async function loadRolesTable() {
-            const roles = await getAllRoles();
+        function loadRolesTable() {
+            const roles = getAllRoles();
             const container = document.getElementById('rolesTableContainer');
             
             if (roles.length === 0) {
@@ -3549,19 +3454,8 @@
             `;
             
             roles.forEach(role => {
-                let permissions = [];
-                try {
-                    if (typeof role.permissions === 'string') {
-                        permissions = JSON.parse(role.permissions);
-                    } else if (Array.isArray(role.permissions)) {
-                        permissions = role.permissions;
-                    }
-                } catch (e) {
-                    console.error('Ошибка парсинга permissions:', e);
-                }
-                
                 html += `
-                    <div class="sortable-role" data-role-key="${role.key}" data-role-id="${role.id}" draggable="true"
+                    <div class="sortable-role" data-role-key="${role.key}" draggable="true"
                          style="background: rgba(40, 40, 40, 0.8); padding: 15px; border-radius: 10px; border-left: 4px solid ${role.color}; display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <i class="fas fa-grip-vertical" style="color: var(--text-muted); cursor: move;"></i>
@@ -3570,8 +3464,8 @@
                                 <strong>${role.name}</strong>
                                 <div style="font-size: 0.9rem; color: var(--text-muted);">${role.description || ''}</div>
                                 <div class="permissions-list" style="margin-top: 5px;">
-                                    ${permissions.map(perm => `<span class="permission-tag">${perm}</span>`).join('')}
-                                    ${permissions.length === 0 ? '<span style="color: var(--text-muted); font-style: italic;">Нет разрешений</span>' : ''}
+                                    ${role.permissions.map(perm => `<span class="permission-tag">${perm}</span>`).join('')}
+                                    ${role.permissions.length === 0 ? '<span style="color: var(--text-muted); font-style: italic;">Нет разрешений</span>' : ''}
                                 </div>
                             </div>
                         </div>
@@ -3623,21 +3517,22 @@
                 }
             });
             
-            container.addEventListener('dragend', async function(e) {
+            container.addEventListener('dragend', function(e) {
                 if (draggedRole) {
                     draggedRole.classList.remove('dragging');
                     
+                    const roles = getAllRoles();
                     const roleElements = container.querySelectorAll('.sortable-role');
                     
-                    for (let i = 0; i < roleElements.length; i++) {
-                        const element = roleElements[i];
-                        const roleId = element.dataset.roleId;
-                        
-                        if (roleId) {
-                            await db.update('roles', roleId, { sort_order: i });
+                    roleElements.forEach((element, index) => {
+                        const roleKey = element.dataset.roleKey;
+                        const roleIndex = roles.findIndex(r => r.key === roleKey);
+                        if (roleIndex !== -1) {
+                            roles[roleIndex].order = index;
                         }
-                    }
+                    });
                     
+                    localStorage.setItem('familyRoles', JSON.stringify(roles));
                     showNotification('success', 'Порядок ролей обновлен');
                     draggedRole = null;
                 }
@@ -3660,340 +3555,286 @@
         }
 
         // Удалить роль
-        async function deleteRole(roleKey) {
+        function deleteRole(roleKey) {
             if (!confirm(`Вы уверены, что хотите удалить роль "${roleKey}"?`)) return;
             
-            try {
-                const roles = await getAllRoles();
-                const roleToDelete = roles.find(role => role.key === roleKey);
-                
-                if (roleToDelete) {
-                    await db.delete('roles', roleToDelete.id);
-                    
-                    // Обновляем пользователей с этой ролью на guest
-                    const users = await db.get('users', { filter: { role: roleKey } });
-                    for (const user of users) {
-                        await db.update('users', user.id, { role: 'guest' });
-                    }
-                    
-                    loadRolesTable();
-                    updateRoleSelect();
-                    updateAuthUI();
-                    showNotification('success', 'Роль удалена успешно!');
+            const roles = getAllRoles();
+            const filteredRoles = roles.filter(role => role.key !== roleKey);
+            
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            users.forEach(user => {
+                if (user.role === roleKey) {
+                    user.role = 'guest';
                 }
-            } catch (error) {
-                console.error('Ошибка удаления роли:', error);
-                showNotification('error', 'Ошибка при удалении роли');
-            }
+            });
+            
+            localStorage.setItem('familyRoles', JSON.stringify(filteredRoles));
+            localStorage.setItem('familyUsers', JSON.stringify(users));
+            
+            loadRolesTable();
+            updateRoleSelect();
+            updateAuthUI();
+            showNotification('success', 'Роль удалена успешно!');
         }
 
         // Загрузить список пользователей
-        async function loadUsersList() {
-            try {
-                const users = await db.get('users');
-                const container = document.getElementById('usersList');
+        function loadUsersList() {
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            const container = document.getElementById('usersList');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Нет пользователей</p>';
+                return;
+            }
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">';
+            
+            users.forEach(user => {
+                const role = getUserRole(user);
+                const createdDate = new Date(user.createdAt);
+                const lastLogin = user.lastLogin ? new Date(user.lastLogin) : null;
                 
-                if (!users || users.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Нет пользователей</p>';
-                    return;
-                }
-                
-                let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">';
-                
-                for (const user of users) {
-                    const role = await getUserRole(user);
-                    const createdDate = new Date(user.created_at);
-                    const lastLogin = user.last_login ? new Date(user.last_login) : null;
-                    
-                    html += `
-                        <div style="background: rgba(40, 40, 40, 0.8); padding: 20px; border-radius: 10px; border-left: 4px solid ${role.color};">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    ${user.avatar ? `<img src="${user.avatar}" alt="${user.username}" style="width: 40px; height: 40px; border-radius: 50%;">` : ''}
-                                    <div>
-                                        <strong>${user.username}</strong>
-                                        <div style="font-size: 0.8rem; color: var(--text-muted);">${user.discord_id}</div>
-                                    </div>
-                                </div>
-                                <span class="role-badge" style="background: ${role.color};">${role.name}</span>
-                            </div>
-                            
-                            <div style="margin-bottom: 15px;">
-                                <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 5px;">
-                                    Создан: ${createdDate.toLocaleDateString()}
-                                    ${lastLogin ? `<br>Последний вход: ${lastLogin.toLocaleDateString()}` : ''}
+                html += `
+                    <div style="background: rgba(40, 40, 40, 0.8); padding: 20px; border-radius: 10px; border-left: 4px solid ${role.color};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                ${user.avatar ? `<img src="${user.avatar}" alt="${user.username}" style="width: 40px; height: 40px; border-radius: 50%;">` : ''}
+                                <div>
+                                    <strong>${user.username}</strong>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">${user.discordId}</div>
                                 </div>
                             </div>
-                            
-                            <div class="action-buttons-small">
-                                <select class="role-select" onchange="updateUserRole(${user.id}, this.value)" style="flex: 1; padding: 8px; background: rgba(60, 60, 60, 0.8); color: white; border: 1px solid var(--border-color); border-radius: 6px;">
-                                    ${(await getAllRoles()).map(r => `
-                                        <option value="${r.key}" ${user.role === r.key ? 'selected' : ''}>${r.name}</option>
-                                    `).join('')}
-                                </select>
+                            <span class="role-badge" style="background: ${role.color};">${role.name}</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 5px;">
+                                Создан: ${createdDate.toLocaleDateString()}
+                                ${lastLogin ? `<br>Последний вход: ${lastLogin.toLocaleDateString()}` : ''}
                             </div>
                         </div>
-                    `;
-                }
-                
-                html += '</div>';
-                container.innerHTML = html;
-            } catch (error) {
-                console.error('Ошибка загрузки пользователей:', error);
-                const container = document.getElementById('usersList');
-                container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Ошибка загрузки пользователей</p>';
-            }
+                        
+                        <div class="action-buttons-small">
+                            <select class="role-select" onchange="updateUserRole(${user.id}, this.value)" style="flex: 1; padding: 8px; background: rgba(60, 60, 60, 0.8); color: white; border: 1px solid var(--border-color); border-radius: 6px;">
+                                ${getAllRoles().map(r => `
+                                    <option value="${r.key}" ${user.role === r.key ? 'selected' : ''}>${r.name}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         // Обновить роль пользователя
-        async function updateUserRole(userId, newRole) {
-            try {
-                await db.update('users', userId, { role: newRole });
+        function updateUserRole(userId, newRole) {
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            const userIndex = users.findIndex(u => u.id === userId);
+            
+            if (userIndex !== -1) {
+                users[userIndex].role = newRole;
+                localStorage.setItem('familyUsers', JSON.stringify(users));
                 
                 const currentUser = getCurrentUser();
-                if (currentUser && currentUser.id == userId) {
-                    currentUser.role = newRole;
-                    localStorage.setItem('familyCurrentUser', JSON.stringify(currentUser));
+                if (currentUser && currentUser.id === userId) {
+                    localStorage.setItem('familyCurrentUser', userId);
                     updateAuthUI();
                 }
                 
                 showNotification('success', 'Роль пользователя обновлена');
                 loadUsersList();
-            } catch (error) {
-                console.error('Ошибка обновления роли:', error);
-                showNotification('error', 'Ошибка при обновлении роли');
             }
         }
 
         // === СИСТЕМА ЗАЯВОК ===
         
         // Отправить заявку
-        async function submitApplication(formData) {
-            try {
-                const newApplication = {
-                    ...formData,
-                    status: 'pending',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    reviewed_by: null,
-                    review_comment: null
-                };
-                
-                const result = await db.add('applications', newApplication);
-                return result.data;
-            } catch (error) {
-                console.error('Ошибка отправки заявки:', error);
-                throw error;
-            }
+        function submitApplication(formData) {
+            const applications = JSON.parse(localStorage.getItem('familyApplications') || '[]');
+            const nextId = parseInt(localStorage.getItem('familyApplicationIdCounter')) || 1;
+            
+            const newApplication = {
+                id: nextId,
+                ...formData,
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                reviewedBy: null,
+                reviewComment: null
+            };
+            
+            applications.push(newApplication);
+            localStorage.setItem('familyApplications', JSON.stringify(applications));
+            localStorage.setItem('familyApplicationIdCounter', (nextId + 1).toString());
+            
+            return newApplication;
         }
 
         // Загрузить заявки
-        async function loadApplications() {
-            try {
-                const applications = await db.get('applications');
-                const container = document.getElementById('applicationsContainer');
-                const currentUser = getCurrentUser();
-                
-                if (!applications || applications.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">
-                            <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                            <p>Нет заявок на вступление</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                applications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                
-                let html = '';
-                for (const app of applications) {
-                    const createdDate = new Date(app.created_at);
-                    const statusClass = app.status;
-                    const statusText = app.status === 'pending' ? 'На рассмотрении' : 
-                                      app.status === 'approved' ? 'Одобрена' : 'Отклонена';
-                    
-                    html += `
-                        <div class="application-card ${statusClass}">
-                            <div class="application-header">
-                                <span class="application-id">Заявка #${app.id}</span>
-                                <span class="application-status ${statusClass}">${statusText}</span>
-                            </div>
-                            
-                            <div class="application-details">
-                                <div class="application-detail">
-                                    <i class="fas fa-user"></i>
-                                    <span><strong>Никнейм:</strong> ${escapeHtml(app.nickname)}</span>
-                                </div>
-                                <div class="application-detail">
-                                    <i class="fas fa-birthday-cake"></i>
-                                    <span><strong>Возраст:</strong> ${app.age}</span>
-                                </div>
-                                <div class="application-detail">
-                                    <i class="fab fa-discord"></i>
-                                    <span><strong>Discord ID:</strong> ${app.discord_id}</span>
-                                </div>
-                                <div class="application-detail">
-                                    <i class="fas fa-clock"></i>
-                                    <span><strong>Онлайн:</strong> ${app.hours_per_day} ч/день</span>
-                                </div>
-                                <div class="application-detail">
-                                    <i class="fas fa-gamepad"></i>
-                                    <span><strong>Опыт:</strong> ${app.total_hours} часов в RP</span>
-                                </div>
-                                <div class="application-detail">
-                                    <i class="fas fa-globe"></i>
-                                    <span><strong>Часовой пояс:</strong> ${getTimezoneLabel(app.timezone)}</span>
-                                </div>
-                                <div class="application-detail" style="align-items: flex-start;">
-                                    <i class="fas fa-comment"></i>
-                                    <span><strong>Мотивация:</strong> ${escapeHtml(app.motivation)}</span>
-                                </div>
-                                ${app.previousFamilies ? `
-                                    <div class="application-detail" style="align-items: flex-start;">
-                                        <i class="fas fa-history"></i>
-                                        <span><strong>Предыдущие семьи:</strong> ${escapeHtml(app.previousFamilies)}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            
-                            <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">
-                                Подана: ${createdDate.toLocaleDateString()} ${createdDate.toLocaleTimeString()}
-                            </div>
-                            
-                            ${app.review_comment ? `
-                                <div style="margin-top: 10px; padding: 10px; background: rgba(60, 60, 60, 0.5); border-radius: 6px;">
-                                    <strong>Комментарий:</strong> ${escapeHtml(app.review_comment)}
-                                </div>
-                            ` : ''}
-                            
-                            ${currentUser && await hasPermission('manage_applications') && app.status === 'pending' ? `
-                                <div class="application-actions">
-                                    <button class="submit-btn success" style="padding: 10px 20px; font-size: 1rem;" onclick="reviewApplication(${app.id}, 'approve')">
-                                        <i class="fas fa-check"></i> Одобрить
-                                    </button>
-                                    <button class="submit-btn danger" style="padding: 10px 20px; font-size: 1rem;" onclick="reviewApplication(${app.id}, 'reject')">
-                                        <i class="fas fa-times"></i> Отклонить
-                                    </button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                }
-                
-                container.innerHTML = html;
-            } catch (error) {
-                console.error('Ошибка загрузки заявок:', error);
-                const container = document.getElementById('applicationsContainer');
+        function loadApplications() {
+            const applications = JSON.parse(localStorage.getItem('familyApplications') || '[]');
+            const container = document.getElementById('applicationsContainer');
+            const currentUser = getCurrentUser();
+            
+            if (applications.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                        <p>Ошибка загрузки заявок</p>
+                        <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <p>Нет заявок на вступление</p>
                     </div>
                 `;
+                return;
             }
+            
+            applications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            let html = '';
+            applications.forEach(app => {
+                const createdDate = new Date(app.createdAt);
+                const statusClass = app.status;
+                const statusText = app.status === 'pending' ? 'На рассмотрении' : 
+                                  app.status === 'approved' ? 'Одобрена' : 'Отклонена';
+                
+                html += `
+                    <div class="application-card ${statusClass}">
+                        <div class="application-header">
+                            <span class="application-id">Заявка #${app.id}</span>
+                            <span class="application-status ${statusClass}">${statusText}</span>
+                        </div>
+                        
+                        <div class="application-details">
+                            <div class="application-detail">
+                                <i class="fas fa-user"></i>
+                                <span><strong>Никнейм:</strong> ${escapeHtml(app.nickname)}</span>
+                            </div>
+                            <div class="application-detail">
+                                <i class="fas fa-birthday-cake"></i>
+                                <span><strong>Возраст:</strong> ${app.age}</span>
+                            </div>
+                            <div class="application-detail">
+                                <i class="fab fa-discord"></i>
+                                <span><strong>Discord ID:</strong> ${app.discord_id}</span>
+                            </div>
+                            <div class="application-detail">
+                                <i class="fas fa-clock"></i>
+                                <span><strong>Онлайн:</strong> ${app.hours_per_day} ч/день</span>
+                            </div>
+                            <div class="application-detail">
+                                <i class="fas fa-gamepad"></i>
+                                <span><strong>Опыт:</strong> ${app.total_hours} часов в RP</span>
+                            </div>
+                            <div class="application-detail">
+                                <i class="fas fa-globe"></i>
+                                <span><strong>Часовой пояс:</strong> ${getTimezoneLabel(app.timezone)}</span>
+                            </div>
+                            <div class="application-detail" style="align-items: flex-start;">
+                                <i class="fas fa-comment"></i>
+                                <span><strong>Мотивация:</strong> ${escapeHtml(app.motivation)}</span>
+                            </div>
+                            ${app.previousFamilies ? `
+                                <div class="application-detail" style="align-items: flex-start;">
+                                    <i class="fas fa-history"></i>
+                                    <span><strong>Предыдущие семьи:</strong> ${escapeHtml(app.previousFamilies)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">
+                            Подана: ${createdDate.toLocaleDateString()} ${createdDate.toLocaleTimeString()}
+                        </div>
+                        
+                        ${app.reviewComment ? `
+                            <div style="margin-top: 10px; padding: 10px; background: rgba(60, 60, 60, 0.5); border-radius: 6px;">
+                                <strong>Комментарий:</strong> ${escapeHtml(app.reviewComment)}
+                            </div>
+                        ` : ''}
+                        
+                        ${currentUser && hasPermission('manage_applications') && app.status === 'pending' ? `
+                            <div class="application-actions">
+                                <button class="submit-btn success" style="padding: 10px 20px; font-size: 1rem;" onclick="reviewApplication(${app.id}, 'approve')">
+                                    <i class="fas fa-check"></i> Одобрить
+                                </button>
+                                <button class="submit-btn danger" style="padding: 10px 20px; font-size: 1rem;" onclick="reviewApplication(${app.id}, 'reject')">
+                                    <i class="fas fa-times"></i> Отклонить
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
         }
 
         // Рассмотреть заявку
-        async function reviewApplication(applicationId, action) {
+        function reviewApplication(applicationId, action) {
+            const applications = JSON.parse(localStorage.getItem('familyApplications') || '[]');
+            const appIndex = applications.findIndex(app => app.id === applicationId);
             const currentUser = getCurrentUser();
             
-            if (!currentUser) {
-                showNotification('error', 'Вы не авторизованы');
-                return;
-            }
+            if (appIndex === -1 || !currentUser) return;
             
             const comment = prompt(action === 'approve' ? 'Введите комментарий к одобрению:' : 'Введите причину отказа:');
             if (comment === null) return;
             
-            try {
-                await db.update('applications', applicationId, {
-                    status: action === 'approve' ? 'approved' : 'rejected',
-                    updated_at: new Date().toISOString(),
-                    reviewed_by: currentUser.id,
-                    review_comment: comment
-                });
-                
-                // Отправляем уведомление пользователю
-                const application = await db.get('applications', { id: applicationId });
-                if (application && application.discord_id) {
-                    await sendNotificationToUser(application.discord_id, action, comment);
-                }
-                
-                loadApplications();
-                showNotification('success', `Заявка #${applicationId} ${action === 'approve' ? 'одобрена' : 'отклонена'}`);
-            } catch (error) {
-                console.error('Ошибка рассмотрения заявки:', error);
-                showNotification('error', 'Ошибка при рассмотрении заявки');
-            }
+            applications[appIndex].status = action === 'approve' ? 'approved' : 'rejected';
+            applications[appIndex].updatedAt = new Date().toISOString();
+            applications[appIndex].reviewedBy = currentUser.id;
+            applications[appIndex].reviewComment = comment;
+            
+            localStorage.setItem('familyApplications', JSON.stringify(applications));
+            
+            sendNotificationToUser(applications[appIndex].discord_id, action, comment);
+            
+            loadApplications();
+            showNotification('success', `Заявка #${applicationId} ${action === 'approve' ? 'одобрена' : 'отклонена'}`);
         }
 
         // Отправить уведомление пользователю
-        async function sendNotificationToUser(discordId, action, comment) {
-            try {
-                const users = await db.get('users', { filter: { discord_id: discordId } });
-                if (users.length === 0) return;
-                
-                const user = users[0];
-                let notifications = [];
-                
-                try {
-                    if (user.notifications && typeof user.notifications === 'string') {
-                        notifications = JSON.parse(user.notifications);
-                    } else if (Array.isArray(user.notifications)) {
-                        notifications = user.notifications;
-                    }
-                } catch (e) {
-                    console.error('Ошибка парсинга notifications:', e);
-                }
-                
-                const notification = {
-                    id: Date.now(),
-                    type: action === 'approve' ? 'success' : 'error',
-                    title: action === 'approve' ? 'Заявка одобрена!' : 'Заявка отклонена',
-                    message: comment,
-                    createdAt: new Date().toISOString(),
-                    read: false
-                };
-                
-                notifications.push(notification);
-                
-                await db.update('users', user.id, { notifications: JSON.stringify(notifications) });
-                
-                const currentUser = getCurrentUser();
-                if (currentUser && currentUser.discord_id === discordId) {
-                    showNotification(notification.type, `${notification.title}: ${notification.message}`);
-                }
-            } catch (error) {
-                console.error('Ошибка отправки уведомления:', error);
+        function sendNotificationToUser(discordId, action, comment) {
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            const user = users.find(u => u.discordId === discordId);
+            
+            if (!user) return;
+            
+            const notification = {
+                id: Date.now(),
+                type: action === 'approve' ? 'success' : 'error',
+                title: action === 'approve' ? 'Заявка одобрена!' : 'Заявка отклонена',
+                message: comment,
+                createdAt: new Date().toISOString(),
+                read: false
+            };
+            
+            if (!user.notifications) user.notifications = [];
+            user.notifications.push(notification);
+            
+            localStorage.setItem('familyUsers', JSON.stringify(users));
+            
+            if (getCurrentUser() && getCurrentUser().discordId === discordId) {
+                showNotification(notification.type, `${notification.title}: ${notification.message}`);
             }
         }
 
         // Загрузить уведомления пользователя
-        async function loadUserNotifications() {
+        function loadUserNotifications() {
             const user = getCurrentUser();
-            if (!user) return;
+            if (!user || !user.notifications) return;
             
-            try {
-                let notifications = [];
-                
-                if (user.notifications && typeof user.notifications === 'string') {
-                    notifications = JSON.parse(user.notifications);
-                } else if (Array.isArray(user.notifications)) {
-                    notifications = user.notifications;
-                }
-                
-                const unreadNotifications = notifications.filter(n => !n.read);
-                unreadNotifications.forEach(notification => {
-                    showNotification(notification.type, `${notification.title}: ${notification.message}`);
-                });
-                
-                // Помечаем уведомления как прочитанные
-                notifications.forEach(n => n.read = true);
-                await db.update('users', user.id, { notifications: JSON.stringify(notifications) });
-                
-            } catch (error) {
-                console.error('Ошибка загрузки уведомлений:', error);
+            const unreadNotifications = user.notifications.filter(n => !n.read);
+            unreadNotifications.forEach(notification => {
+                showNotification(notification.type, `${notification.title}: ${notification.message}`);
+            });
+            
+            user.notifications.forEach(n => n.read = true);
+            const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+            const userIndex = users.findIndex(u => u.id === user.id);
+            if (userIndex !== -1) {
+                users[userIndex].notifications = user.notifications;
+                localStorage.setItem('familyUsers', JSON.stringify(users));
             }
         }
 
@@ -4011,7 +3852,7 @@
         }
 
         // Опубликовать новость
-        async function publishNews() {
+        function publishNews() {
             const title = document.getElementById('newsTitle').value.trim();
             const content = document.getElementById('newsContent').value.trim();
             const currentUser = getCurrentUser();
@@ -4026,85 +3867,75 @@
                 return;
             }
             
-            try {
-                const newNews = {
-                    title: title,
-                    content: content,
-                    author_id: currentUser.id,
-                    author_name: currentUser.username,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                };
-                
-                await db.add('news', newNews);
-                
-                closeNewsModal();
-                loadNews();
-                showNotification('success', 'Новость опубликована!');
-            } catch (error) {
-                console.error('Ошибка публикации новости:', error);
-                showNotification('error', 'Ошибка при публикации новости');
-            }
+            const news = JSON.parse(localStorage.getItem('familyNews') || '[]');
+            const nextId = parseInt(localStorage.getItem('familyNewsIdCounter')) || 1;
+            
+            const newNews = {
+                id: nextId,
+                title: title,
+                content: content,
+                authorId: currentUser.id,
+                authorName: currentUser.username,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            news.push(newNews);
+            localStorage.setItem('familyNews', JSON.stringify(news));
+            localStorage.setItem('familyNewsIdCounter', (nextId + 1).toString());
+            
+            closeNewsModal();
+            loadNews();
+            showNotification('success', 'Новость опубликована!');
         }
 
         // Загрузить новости
-        async function loadNews() {
-            try {
-                const news = await db.get('news');
-                const container = document.getElementById('newsContainer');
-                
-                if (!news || news.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">
-                            <i class="fas fa-newspaper" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                            <p>Нет новостей</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                news.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                
-                let html = '';
-                for (const item of news) {
-                    const createdDate = new Date(item.created_at);
-                    
-                    html += `
-                        <div class="news-card">
-                            <div class="news-header">
-                                <div class="news-title">${escapeHtml(item.title)}</div>
-                                <div class="news-meta">
-                                    <span>${createdDate.toLocaleDateString()}</span>
-                                    <span>${createdDate.toLocaleTimeString()}</span>
-                                </div>
-                            </div>
-                            <div class="news-content">
-                                <p>${escapeHtml(item.content).replace(/\n/g, '<br>')}</p>
-                                <div class="news-author">
-                                    — ${escapeHtml(item.author_name)}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                container.innerHTML = html;
-            } catch (error) {
-                console.error('Ошибка загрузки новостей:', error);
-                const container = document.getElementById('newsContainer');
+        function loadNews() {
+            const news = JSON.parse(localStorage.getItem('familyNews') || '[]');
+            const container = document.getElementById('newsContainer');
+            
+            if (news.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                        <p>Ошибка загрузки новостей</p>
+                        <i class="fas fa-newspaper" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <p>Нет новостей</p>
                     </div>
                 `;
+                return;
             }
+            
+            news.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            let html = '';
+            news.forEach(item => {
+                const createdDate = new Date(item.createdAt);
+                
+                html += `
+                    <div class="news-card">
+                        <div class="news-header">
+                            <div class="news-title">${escapeHtml(item.title)}</div>
+                            <div class="news-meta">
+                                <span>${createdDate.toLocaleDateString()}</span>
+                                <span>${createdDate.toLocaleTimeString()}</span>
+                            </div>
+                        </div>
+                        <div class="news-content">
+                            <p>${escapeHtml(item.content).replace(/\n/g, '<br>')}</p>
+                            <div class="news-author">
+                                — ${escapeHtml(item.authorName)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
         }
 
         // === СИСТЕМА ЧАТА ===
         
         // Отправить сообщение в чат
-        async function sendChatMessage() {
+        function sendChatMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
             const currentUser = getCurrentUser();
@@ -4119,81 +3950,72 @@
                 return;
             }
             
-            try {
-                const newMessage = {
-                    user_id: currentUser.id,
-                    user_name: currentUser.username,
-                    user_avatar: currentUser.avatar,
-                    message: message,
-                    created_at: new Date().toISOString()
-                };
-                
-                await db.add('chat', newMessage);
-                input.value = '';
-                loadChat();
-                
-                setTimeout(() => {
-                    const chatMessages = document.getElementById('chatMessages');
-                    if (chatMessages) {
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    }
-                }, 100);
-            } catch (error) {
-                console.error('Ошибка отправки сообщения:', error);
-                showNotification('error', 'Ошибка при отправке сообщения');
+            const chat = JSON.parse(localStorage.getItem('familyChat') || '[]');
+            
+            const newMessage = {
+                id: Date.now(),
+                userId: currentUser.id,
+                userName: currentUser.username,
+                userAvatar: currentUser.avatar,
+                message: message,
+                createdAt: new Date().toISOString()
+            };
+            
+            chat.push(newMessage);
+            
+            if (chat.length > 100) {
+                chat.shift();
             }
+            
+            localStorage.setItem('familyChat', JSON.stringify(chat));
+            input.value = '';
+            loadChat();
+            
+            setTimeout(() => {
+                const chatMessages = document.getElementById('chatMessages');
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }, 100);
         }
 
         // Загрузить чат
-        async function loadChat() {
-            try {
-                const chat = await db.get('chat', { limit: 100 });
-                const container = document.getElementById('chatMessages');
-                const currentUser = getCurrentUser();
-                
-                if (!chat || chat.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                            <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                            <p>Чат пуст. Будьте первым, кто напишет сообщение!</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                chat.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                
-                let html = '';
-                for (const msg of chat) {
-                    const isOwn = currentUser && msg.user_id == currentUser.id;
-                    const messageDate = new Date(msg.created_at);
-                    
-                    html += `
-                        <div class="chat-message ${isOwn ? 'own' : ''}">
-                            <div class="message-header">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    ${msg.user_avatar ? `<img src="${msg.user_avatar}" alt="${msg.user_name}" style="width: 30px; height: 30px; border-radius: 50%;">` : ''}
-                                    <span class="message-author">${escapeHtml(msg.user_name)}</span>
-                                </div>
-                                <span class="message-time">${messageDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            </div>
-                            <div class="message-content">${escapeHtml(msg.message)}</div>
-                        </div>
-                    `;
-                }
-                
-                container.innerHTML = html;
-                container.scrollTop = container.scrollHeight;
-            } catch (error) {
-                console.error('Ошибка загрузки чата:', error);
-                const container = document.getElementById('chatMessages');
+        function loadChat() {
+            const chat = JSON.parse(localStorage.getItem('familyChat') || '[]');
+            const container = document.getElementById('chatMessages');
+            const currentUser = getCurrentUser();
+            
+            if (chat.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                        <p>Ошибка загрузки чата</p>
+                        <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <p>Чат пуст. Будьте первым, кто напишет сообщение!</p>
                     </div>
                 `;
+                return;
             }
+            
+            let html = '';
+            chat.forEach(msg => {
+                const isOwn = currentUser && msg.userId === currentUser.id;
+                const messageDate = new Date(msg.createdAt);
+                
+                html += `
+                    <div class="chat-message ${isOwn ? 'own' : ''}">
+                        <div class="message-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                ${msg.userAvatar ? `<img src="${msg.userAvatar}" alt="${msg.userName}" style="width: 30px; height: 30px; border-radius: 50%;">` : ''}
+                                <span class="message-author">${escapeHtml(msg.userName)}</span>
+                            </div>
+                            <span class="message-time">${messageDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div class="message-content">${escapeHtml(msg.message)}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
         }
 
         // Обработка отправки сообщения по Enter
@@ -4214,16 +4036,15 @@
         let currentAction = null;
         let currentEntryId = null;
 
-        // Загрузить черный список
-        async function loadBlacklist() {
-            try {
-                const blacklist = await db.get('blacklist');
-                blacklistData = blacklist || [];
-                updateBlacklistDisplay();
-                updateInfoStats();
-            } catch (error) {
-                console.error('Ошибка загрузки черного списка:', error);
-                blacklistData = [];
+        function initBlacklistStorage() {
+            const savedData = localStorage.getItem('familyBlacklist');
+            if (savedData) {
+                try {
+                    blacklistData = JSON.parse(savedData);
+                } catch (e) {
+                    blacklistData = [];
+                    localStorage.removeItem('familyBlacklist');
+                }
             }
         }
 
@@ -4262,7 +4083,7 @@
             window.addEventListener('hashchange', handleHashChange);
         }
 
-        async function navigateToPage(targetPage) {
+        function navigateToPage(targetPage) {
             const navLinks = document.querySelectorAll('.nav-link');
             const pages = document.querySelectorAll('.page');
             
@@ -4287,7 +4108,7 @@
                         loadActiveRoleCodes();
                         loadUsersList();
                     } else if (targetPage === 'blacklist') {
-                        loadBlacklist();
+                        updateBlacklistDisplay();
                     } else if (targetPage === 'info') {
                         updateInfoStats();
                     }
@@ -4444,55 +4265,42 @@
             return blacklistData.find(entry => entry.blacklistId === blacklistId);
         }
 
-        async function removeBlacklistEntryById(blacklistId) {
-            const entry = blacklistData.find(e => e.blacklistId === blacklistId);
-            if (!entry) return false;
+        function removeBlacklistEntryById(blacklistId) {
+            const initialLength = blacklistData.length;
+            blacklistData = blacklistData.filter(entry => entry.blacklistId !== blacklistId);
             
-            try {
-                await db.delete('blacklist', entry.id);
-                await loadBlacklist();
+            if (blacklistData.length < initialLength) {
+                localStorage.setItem('familyBlacklist', JSON.stringify(blacklistData));
                 return true;
-            } catch (error) {
-                console.error('Ошибка удаления из черного списка:', error);
-                return false;
             }
+            return false;
         }
 
-        async function clearAllBlacklist() {
-            try {
-                const blacklist = await db.get('blacklist');
-                for (const entry of blacklist) {
-                    await db.delete('blacklist', entry.id);
-                }
-                await loadBlacklist();
-                return true;
-            } catch (error) {
-                console.error('Ошибка очистки черного списка:', error);
-                return false;
-            }
+        function clearAllBlacklist() {
+            blacklistData = [];
+            localStorage.setItem('familyBlacklist', JSON.stringify(blacklistData));
+            return true;
         }
 
-        async function addToBlacklist(formData) {
+        function addToBlacklist(formData) {
+            const blacklistId = generateBlacklistId();
             const currentUser = getCurrentUser();
             
             const newEntry = {
-                blacklist_id: generateBlacklistId(),
+                id: Date.now(),
+                blacklistId: blacklistId,
                 nickname: formData.blacklist_nickname,
                 discord_id: formData.blacklist_discord_id,
                 reason: formData.blacklist_reason,
-                added_by: currentUser ? currentUser.username : 'Система',
-                added_by_id: currentUser ? currentUser.id : null,
-                created_at: new Date().toISOString()
+                date: new Date().toISOString(),
+                addedBy: currentUser ? currentUser.username : 'Система',
+                addedById: currentUser ? currentUser.id : null
             };
             
-            try {
-                await db.add('blacklist', newEntry);
-                await loadBlacklist();
-                return true;
-            } catch (error) {
-                console.error('Ошибка добавления в черный список:', error);
-                return false;
-            }
+            blacklistData.push(newEntry);
+            localStorage.setItem('familyBlacklist', JSON.stringify(blacklistData));
+            
+            return true;
         }
 
         function updateBlacklistDisplay() {
@@ -4514,7 +4322,7 @@
             let html = '<ul class="blacklist-list">';
             
             blacklistData.forEach(entry => {
-                const date = new Date(entry.created_at);
+                const date = new Date(entry.date);
                 const formattedDate = date.toLocaleDateString('ru-RU', {
                     day: '2-digit',
                     month: '2-digit',
@@ -4527,7 +4335,7 @@
                     <li class="blacklist-item">
                         <div class="blacklist-item-header">
                             <div>
-                                <span class="blacklist-item-id">${escapeHtml(entry.blacklist_id)}</span>
+                                <span class="blacklist-item-id">${escapeHtml(entry.blacklistId)}</span>
                                 <span class="blacklist-item-nickname">${escapeHtml(entry.nickname)}</span>
                             </div>
                             <div class="blacklist-item-discord">ID: ${entry.discord_id}</div>
@@ -4536,11 +4344,11 @@
                             <strong>Причина:</strong> ${escapeHtml(entry.reason)}
                         </div>
                         <div class="blacklist-item-reason">
-                            <strong>Добавил:</strong> ${entry.added_by || 'Система'}
+                            <strong>Добавил:</strong> ${entry.addedBy || 'Система'}
                         </div>
                         <div class="blacklist-item-actions">
                             ${hasPermission('remove_blacklist') ? `
-                                <button class="submit-btn danger" style="padding: 8px 15px; font-size: 0.9rem;" onclick="showDeleteConfirm('${entry.blacklist_id}', '${escapeHtml(entry.nickname)}')">
+                                <button class="submit-btn danger" style="padding: 8px 15px; font-size: 0.9rem;" onclick="showDeleteConfirm('${entry.blacklistId}', '${escapeHtml(entry.nickname)}')">
                                     <i class="fas fa-trash"></i> Удалить
                                 </button>
                             ` : ''}
@@ -4556,22 +4364,17 @@
             blacklistList.innerHTML = html;
         }
 
-        async function updateInfoStats() {
-            try {
-                const blacklistCount = document.getElementById('blacklistCount');
-                if (blacklistCount) {
-                    const blacklist = await db.get('blacklist');
-                    blacklistCount.textContent = blacklist ? blacklist.length : 0;
-                }
-                
-                const membersCount = document.getElementById('membersCount');
-                if (membersCount) {
-                    const users = await db.get('users');
-                    const activeUsers = users ? users.filter(u => u.role !== 'guest') : [];
-                    membersCount.textContent = activeUsers.length;
-                }
-            } catch (error) {
-                console.error('Ошибка обновления статистики:', error);
+        function updateInfoStats() {
+            const blacklistCount = document.getElementById('blacklistCount');
+            if (blacklistCount) {
+                blacklistCount.textContent = blacklistData.length;
+            }
+            
+            const membersCount = document.getElementById('membersCount');
+            if (membersCount) {
+                const users = JSON.parse(localStorage.getItem('familyUsers') || '[]');
+                const activeUsers = users.filter(u => u.role !== 'guest');
+                membersCount.textContent = activeUsers.length;
             }
         }
 
@@ -4630,48 +4433,34 @@
                 submitBtn.textContent = 'Отправка...';
                 submitBtn.style.opacity = '0.7';
                 
-                try {
-                    await submitApplication(formData);
+                const application = submitApplication(formData);
+                
+                submitBtn.textContent = '✅ Отправлено!';
+                submitBtn.style.backgroundColor = '#2ecc71';
+                showNotification('success', 'Заявка успешно отправлена! Мы рассмотрим её в течение 48 часов.');
+                
+                setTimeout(() => {
+                    this.reset();
+                    submitBtn.textContent = originalText;
+                    submitBtn.style.backgroundColor = '';
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
                     
-                    submitBtn.textContent = '✅ Отправлено!';
-                    submitBtn.style.backgroundColor = '#2ecc71';
-                    showNotification('success', 'Заявка успешно отправлена! Мы рассмотрим её в течение 48 часов.');
-                    
-                    setTimeout(() => {
-                        this.reset();
-                        submitBtn.textContent = originalText;
-                        submitBtn.style.backgroundColor = '';
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                        
-                        if (hasPermission('manage_applications')) {
-                            navigateToPage('applications');
-                        }
-                    }, 3000);
-                } catch (error) {
-                    console.error('Ошибка отправки заявки:', error);
-                    submitBtn.textContent = '❌ Ошибка';
-                    submitBtn.style.backgroundColor = '#e74c3c';
-                    showNotification('error', 'Ошибка при отправке заявки');
-                    
-                    setTimeout(() => {
-                        submitBtn.textContent = 'Повторить попытку';
-                        submitBtn.style.backgroundColor = '';
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                    }, 3000);
-                }
+                    if (hasPermission('manage_applications')) {
+                        navigateToPage('applications');
+                    }
+                }, 3000);
             });
         }
 
-        async function initBlacklistForm() {
+        function initBlacklistForm() {
             const blacklistForm = document.getElementById('blacklistForm');
             if (!blacklistForm) return;
             
-            blacklistForm.addEventListener('submit', async function(e) {
+            blacklistForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                if (!await hasPermission('add_blacklist')) {
+                if (!hasPermission('add_blacklist')) {
                     showNotification('error', 'У вас нет прав для добавления в черный список');
                     return;
                 }
@@ -4694,27 +4483,25 @@
                 submitBtn.textContent = 'Добавление...';
                 submitBtn.style.opacity = '0.7';
                 
-                try {
-                    const success = await addToBlacklist(formData);
+                const success = addToBlacklist(formData);
+                
+                if (success) {
+                    submitBtn.textContent = '✅ Добавлено!';
+                    submitBtn.style.backgroundColor = '#2ecc71';
+                    showNotification('success', 'Игрок успешно добавлен в черный список!');
                     
-                    if (success) {
-                        submitBtn.textContent = '✅ Добавлено!';
-                        submitBtn.style.backgroundColor = '#2ecc71';
-                        showNotification('success', 'Игрок успешно добавлен в черный список!');
-                        
-                        blacklistForm.reset();
-                        
-                        setTimeout(() => {
-                            submitBtn.textContent = originalText;
-                            submitBtn.style.backgroundColor = '';
-                            submitBtn.disabled = false;
-                            submitBtn.style.opacity = '1';
-                        }, 3000);
-                    } else {
-                        throw new Error('Ошибка добавления');
-                    }
-                } catch (error) {
-                    console.error('Ошибка:', error);
+                    blacklistForm.reset();
+                    updateBlacklistDisplay();
+                    updateInfoStats();
+                    
+                    setTimeout(() => {
+                        submitBtn.textContent = originalText;
+                        submitBtn.style.backgroundColor = '';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }, 3000);
+                    
+                } else {
                     submitBtn.textContent = '❌ Ошибка';
                     submitBtn.style.backgroundColor = '#e74c3c';
                     showNotification('error', 'Ошибка при добавлении в черный список.');
@@ -4767,34 +4554,38 @@
             modalClose.addEventListener('click', closeConfirmModal);
             modalCancel.addEventListener('click', closeConfirmModal);
             
-            modalConfirm.addEventListener('click', async function() {
+            modalConfirm.addEventListener('click', function() {
                 if (!currentAction) {
                     closeConfirmModal();
                     return;
                 }
                 
                 if (currentAction === 'delete_entry') {
-                    if (!await hasPermission('remove_blacklist')) {
+                    if (!hasPermission('remove_blacklist')) {
                         showNotification('error', 'У вас нет прав для удаления из черного списка');
                         closeConfirmModal();
                         return;
                     }
                     
-                    if (await removeBlacklistEntryById(currentEntryId)) {
+                    if (removeBlacklistEntryById(currentEntryId)) {
                         showNotification('success', 'Игрок успешно удален из черного списка!');
+                        updateBlacklistDisplay();
+                        updateInfoStats();
                     } else {
                         showNotification('error', 'Ошибка при удалении из черного списка.');
                     }
                     
                 } else if (currentAction === 'clear_all') {
-                    if (!await hasPermission('remove_blacklist')) {
+                    if (!hasPermission('remove_blacklist')) {
                         showNotification('error', 'У вас нет прав для очистки черного списка');
                         closeConfirmModal();
                         return;
                     }
                     
-                    if (await clearAllBlacklist()) {
+                    if (clearAllBlacklist()) {
                         showNotification('success', 'Весь черный список успешно очищен!');
+                        updateBlacklistDisplay();
+                        updateInfoStats();
                     } else {
                         showNotification('error', 'Ошибка при очистке черного списка.');
                     }
@@ -4805,8 +4596,8 @@
         }
 
         // Проверка доступа к админ панели
-        async function checkAdminAccess() {
-            if (!await hasPermission('view_admin_panel')) {
+        function checkAdminAccess() {
+            if (!hasPermission('view_admin_panel')) {
                 navigateToPage('home');
                 showNotification('error', 'Доступ запрещен');
                 return false;
@@ -4815,64 +4606,40 @@
         }
 
         // Сброс данных
-        async function resetBlacklist() {
+        function resetBlacklist() {
             if (!confirm('Вы уверены, что хотите очистить весь черный список? Это действие нельзя отменить.')) return;
             
-            try {
-                await clearAllBlacklist();
-                showNotification('success', 'Черный список очищен');
-            } catch (error) {
-                console.error('Ошибка очистки черного списка:', error);
-                showNotification('error', 'Ошибка при очистке черного списка');
-            }
+            blacklistData = [];
+            localStorage.setItem('familyBlacklist', JSON.stringify(blacklistData));
+            updateBlacklistDisplay();
+            updateInfoStats();
+            showNotification('success', 'Черный список очищен');
         }
 
-        async function resetApplications() {
+        function resetApplications() {
             if (!confirm('Вы уверены, что хотите очистить все заявки? Это действие нельзя отменить.')) return;
             
-            try {
-                const applications = await db.get('applications');
-                for (const app of applications) {
-                    await db.delete('applications', app.id);
-                }
-                loadApplications();
-                showNotification('success', 'Заявки очищены');
-            } catch (error) {
-                console.error('Ошибка очистки заявок:', error);
-                showNotification('error', 'Ошибка при очистке заявок');
-            }
+            localStorage.setItem('familyApplications', JSON.stringify([]));
+            localStorage.setItem('familyApplicationIdCounter', '1');
+            loadApplications();
+            showNotification('success', 'Заявки очищены');
         }
 
-        async function resetNews() {
+        function resetNews() {
             if (!confirm('Вы уверены, что хотите очистить все новости? Это действие нельзя отменить.')) return;
             
-            try {
-                const news = await db.get('news');
-                for (const item of news) {
-                    await db.delete('news', item.id);
-                }
-                loadNews();
-                showNotification('success', 'Новости очищены');
-            } catch (error) {
-                console.error('Ошибка очистки новостей:', error);
-                showNotification('error', 'Ошибка при очистке новостей');
-            }
+            localStorage.setItem('familyNews', JSON.stringify([]));
+            localStorage.setItem('familyNewsIdCounter', '1');
+            loadNews();
+            showNotification('success', 'Новости очищены');
         }
 
-        async function resetChat() {
+        function resetChat() {
             if (!confirm('Вы уверены, что хотите очистить весь чат? Это действие нельзя отменить.')) return;
             
-            try {
-                const chat = await db.get('chat');
-                for (const msg of chat) {
-                    await db.delete('chat', msg.id);
-                }
-                loadChat();
-                showNotification('success', 'Чат очищен');
-            } catch (error) {
-                console.error('Ошибка очистки чата:', error);
-                showNotification('error', 'Ошибка при очистке чата');
-            }
+            localStorage.setItem('familyChat', JSON.stringify([]));
+            loadChat();
+            showNotification('success', 'Чат очищен');
         }
 
         // Вспомогательная функция для изменения цвета
@@ -4897,8 +4664,9 @@
 
         // === ИНИЦИАЛИЗАЦИЯ ===
         
-        document.addEventListener('DOMContentLoaded', async function() {
-            await initAuthSystem();
+        document.addEventListener('DOMContentLoaded', function() {
+            initAuthSystem();
+            initBlacklistStorage();
             
             createSnowflakes();
             initNavigation();
@@ -4909,7 +4677,8 @@
             initClearAllButton();
             initModal();
             
-            loadBlacklist();
+            updateBlacklistDisplay();
+            updateInfoStats();
             updateRoleSelect();
             
             loadApplications();
@@ -4922,7 +4691,6 @@
             });
             
             console.log('🎮 Continental FamQ System Activated!');
-            console.log('🔗 Синхронизация с Google Sheets активна');
             console.log('🔑 Система Developer кода готова к работе!');
             console.log('   Введите в консоли ЛЮБОЙ код и введите его в модальном окне');
             console.log('   Код из консоли будет отображаться зеленым цветом');
@@ -4981,519 +4749,5 @@
         document.head.appendChild(style);
         
     </script>
-
-<script>
-// ============ Continental FamQ CRM Frontend ============
-const API_URL = 'https://script.google.com/macros/s/AKfycbyy6uqdJKCDh0hfLBD8h8e2prd6zvCLsvbxdvRw-9KeuWlvEEiZ9qdWz16bpnacEzTL/exec';
-
-// Глобальные данные
-let familyData = {
-  members: [],
-  applications: [],
-  blacklist: [],
-  news: [],
-  roles: [],
-  settings: {}
-};
-
-// Инициализация
-document.addEventListener('DOMContentLoaded', async function() {
-  console.log('🚀 Continental FamQ CRM загружается...');
-  
-  try {
-    // 1. Загружаем данные
-    await loadFamilyData();
-    
-    // 2. Настраиваем интерфейс
-    setupInterface();
-    
-    // 3. Обновляем статистику
-    updateStats();
-    
-    // 4. Добавляем скрытую админ-кнопку
-    addAdminButton();
-    
-  } catch (error) {
-    console.error('❌ Ошибка инициализации:', error);
-  }
-});
-
-// Загрузка данных
-async function loadFamilyData() {
-  try {
-    console.log('📥 Загрузка данных с API...');
-    const response = await fetch(`${API_URL}?action=get_all_data`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ошибка: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      familyData = result.data;
-      console.log('✅ Данные загружены:', {
-        members: familyData.members?.length || 0,
-        applications: familyData.applications?.length || 0,
-        blacklist: familyData.blacklist?.length || 0
-      });
-    } else {
-      console.error('❌ Ошибка в ответе:', result.error);
-    }
-  } catch (error) {
-    console.error('❌ Ошибка загрузки данных:', error);
-  }
-}
-
-// Настройка интерфейса - УПРОЩЕННАЯ ВЕРСИЯ
-function setupInterface() {
-  console.log('⚙️ Настройка интерфейса...');
-  
-  // Ищем кнопки по тексту (русский и английский)
-  const allButtons = document.querySelectorAll('a, button');
-  
-  allButtons.forEach(btn => {
-    const text = btn.textContent.toLowerCase();
-    const href = btn.getAttribute('href') || '';
-    
-    if (text.includes('заявку') || text.includes('apply') || href.includes('apply')) {
-      console.log('📝 Найдена кнопка подачи заявки');
-      btn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showApplicationForm();
-      };
-    }
-    
-    if (text.includes('черный') || text.includes('blacklist')) {
-      console.log('🚫 Найдена кнопка черного списка');
-      btn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showBlacklist();
-      };
-    }
-    
-    if (text.includes('новости') || text.includes('news')) {
-      console.log('📢 Найдена кнопка новостей');
-      btn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showNews();
-      };
-    }
-  });
-}
-
-// Обновление статистики
-function updateStats() {
-  console.log('📊 Обновление статистики...');
-  
-  // Удаляем старую статистику если есть
-  const oldStats = document.getElementById('famq-stats');
-  if (oldStats) oldStats.remove();
-  
-  const statsHTML = `
-    <div id="famq-stats" style="
-      background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
-      padding: 20px;
-      border-radius: 15px;
-      margin: 25px auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
-      max-width: 1200px;
-      border: 2px solid #1a5fb4;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    ">
-      <div style="text-align: center; padding: 15px;">
-        <div style="font-size: 2.8em; color: #4cc9f0; font-weight: 900; text-shadow: 0 2px 10px rgba(76, 201, 240, 0.5);">
-          ${familyData.members?.length || 0}
-        </div>
-        <div style="color: #b8c1ec; font-size: 1.1em; margin-top: 8px;">
-          👥 Членов семьи
-        </div>
-      </div>
-      
-      <div style="text-align: center; padding: 15px;">
-        <div style="font-size: 2.8em; color: #e94560; font-weight: 900; text-shadow: 0 2px 10px rgba(233, 69, 96, 0.5);">
-          ${familyData.applications?.filter(a => a.Статус === 'pending').length || 0}
-        </div>
-        <div style="color: #b8c1ec; font-size: 1.1em; margin-top: 8px;">
-          📝 Ожидают рассмотрения
-        </div>
-      </div>
-      
-      <div style="text-align: center; padding: 15px;">
-        <div style="font-size: 2.8em; color: #9C27B0; font-weight: 900; text-shadow: 0 2px 10px rgba(156, 39, 176, 0.5);">
-          ${familyData.blacklist?.length || 0}
-        </div>
-        <div style="color: #b8c1ec; font-size: 1.1em; margin-top: 8px;">
-          🚫 В черном списке
-        </div>
-      </div>
-      
-      <div style="text-align: center; padding: 15px;">
-        <div style="font-size: 2.8em; color: #4CAF50; font-weight: 900; text-shadow: 0 2px 10px rgba(76, 175, 80, 0.5);">
-          ${familyData.news?.length || 0}
-        </div>
-        <div style="color: #b8c1ec; font-size: 1.1em; margin-top: 8px;">
-          📢 Новостей
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // Пытаемся найти хорошее место для вставки
-  const possibleTargets = [
-    document.querySelector('h1'),
-    document.querySelector('.hero'),
-    document.querySelector('.header'),
-    document.querySelector('main'),
-    document.querySelector('.content')
-  ];
-  
-  let target = null;
-  for (let element of possibleTargets) {
-    if (element) {
-      target = element;
-      break;
-    }
-  }
-  
-  if (target) {
-    target.insertAdjacentHTML('afterend', statsHTML);
-  } else {
-    // Вставляем в начало body
-    document.body.insertAdjacentHTML('afterbegin', statsHTML);
-  }
-}
-
-// Форма заявки (ИСПРАВЛЕННАЯ)
-function showApplicationForm() {
-  console.log('📋 Открытие формы заявки...');
-  
-  // Создаем уникальный ID для модального окна
-  const modalId = 'famq-modal-' + Date.now();
-  
-  const formHTML = `
-    <div id="${modalId}" style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.95);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(10px);
-    ">
-      <div style="
-        background: #1a1a2e;
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 500px;
-        width: 90%;
-        border: 3px solid #e94560;
-        box-shadow: 0 20px 60px rgba(233, 69, 96, 0.4);
-        position: relative;
-      ">
-        <button onclick="document.getElementById('${modalId}').remove()" 
-                style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #e94560; font-size: 24px; cursor: pointer;">
-          ✕
-        </button>
-        
-        <h2 style="color: #e94560; margin-top: 0; margin-bottom: 25px; text-align: center;">
-          📝 Заявка в Continental FamQ
-        </h2>
-        
-        <form id="famq-app-form-${Date.now()}">
-          <input type="text" name="nickname" placeholder="🎮 Ваш ник в GTA *" required 
-                 style="width:100%; padding:14px; margin:10px 0; background: #0a0a1a; border: 2px solid #2a4b7c; color: white; border-radius: 8px; font-size: 16px;">
-          
-          <input type="number" name="age" placeholder="📅 Ваш возраст (16-60) *" required min="16" max="60"
-                 style="width:100%; padding:14px; margin:10px 0; background: #0a0a1a; border: 2px solid #2a4b7c; color: white; border-radius: 8px; font-size: 16px;">
-          
-          <input type="text" name="discord" placeholder="💬 Ваш Discord (name#1234 или name) *" required 
-                 style="width:100%; padding:14px; margin:10px 0; background: #0a0a1a; border: 2px solid #2a4b7c; color: white; border-radius: 8px; font-size: 16px;">
-          
-          <textarea name="reason" placeholder="💭 Почему хотите вступить в Continental FamQ? *" required rows="5"
-                    style="width:100%; padding:14px; margin:10px 0; background: #0a0a1a; border: 2px solid #2a4b7c; color: white; border-radius: 8px; font-size: 16px;"></textarea>
-          
-          <div style="display: flex; gap: 12px; margin-top: 25px;">
-            <button type="submit" style="flex:1; padding:15px; background: linear-gradient(135deg, #e94560 0%, #c2185b 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;">
-              📤 Отправить заявку
-            </button>
-            <button type="button" onclick="document.getElementById('${modalId}').remove()" 
-                    style="flex:1; padding:15px; background: #2a4b7c; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
-              ❌ Отмена
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', formHTML);
-  
-  // Назначаем обработчик формы
-  const formId = `#famq-app-form-${Date.now()}`;
-  const formElement = document.querySelector(formId);
-  
-  if (formElement) {
-    formElement.onsubmit = async function(e) {
-      e.preventDefault();
-      
-      const formData = new FormData(this);
-      const data = {
-        action: 'submit_application',
-        nickname: formData.get('nickname'),
-        age: formData.get('age'),
-        discord: formData.get('discord'),
-        reason: formData.get('reason')
-      };
-      
-      console.log('📤 Отправка заявки:', data);
-      
-      try {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = '🔄 Отправка...';
-        submitBtn.disabled = true;
-        
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          alert('✅ Заявка успешно отправлена!\nID заявки: ' + result.application_id);
-          document.getElementById(modalId).remove();
-          await loadFamilyData();
-          updateStats();
-        } else {
-          alert('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
-          submitBtn.textContent = originalText;
-          submitBtn.disabled = false;
-        }
-      } catch (error) {
-        alert('⚠️ Ошибка сети. Проверьте подключение и попробуйте позже.');
-        console.error('Ошибка отправки:', error);
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-      }
-    };
-  }
-}
-
-// Показать черный список
-function showBlacklist() {
-  if (!familyData.blacklist || familyData.blacklist.length === 0) {
-    alert('🚫 Черный список пуст');
-    return;
-  }
-  
-  const list = familyData.blacklist.map(item => 
-    `• ${item.Ник || 'Без ника'} (${item['Discord ID']})\n  Причина: ${item.Причина || 'Не указана'}\n  Добавил: ${item['Кто добавил'] || 'Система'}\n`
-  ).join('\n');
-  
-  alert(`🚫 ЧЕРНЫЙ СПИСОК (${familyData.blacklist.length}):\n\n${list}`);
-}
-
-// Показать новости
-function showNews() {
-  if (!familyData.news || familyData.news.length === 0) {
-    alert('📢 Новостей пока нет');
-    return;
-  }
-  
-  const recentNews = familyData.news.slice(-5).reverse().map(item => 
-    `📢 ${item.Заголовок || 'Без заголовка'}\n${item.Текст?.substring(0, 150)}${item.Текст?.length > 150 ? '...' : ''}\n👤 ${item.Автор || 'Неизвестно'} • ${new Date(item.Дата).toLocaleDateString('ru-RU')}\n`
-  ).join('\n---\n');
-  
-  alert(`📢 ПОСЛЕДНИЕ НОВОСТИ:\n\n${recentNews}`);
-}
-
-// Админ-панель
-function showAdminPanel() {
-  const code = prompt('🔐 Введите код администратора:');
-  if (code === 'CONTINENTAL2026') {
-    const modalId = 'admin-modal-' + Date.now();
-    
-    const panelHTML = `
-      <div id="${modalId}" style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.95);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(10px);
-      ">
-        <div style="
-          background: #0a0a1a;
-          padding: 30px;
-          border-radius: 15px;
-          max-width: 800px;
-          width: 90%;
-          max-height: 90vh;
-          overflow-y: auto;
-          border: 3px solid #e94560;
-          color: white;
-          position: relative;
-        ">
-          <button onclick="document.getElementById('${modalId}').remove()" 
-                  style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #e94560; font-size: 24px; cursor: pointer;">
-            ✕
-          </button>
-          
-          <h2 style="color: #e94560; text-align: center; margin-bottom: 25px;">
-            👑 АДМИН-ПАНЕЛЬ Continental FamQ
-          </h2>
-          
-          <div style="
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-          ">
-            <button onclick="viewAllApplications()" 
-                    style="padding: 15px; background: #FF9800; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-              📝 Все заявки (${familyData.applications?.length || 0})
-            </button>
-            
-            <button onclick="viewAllMembers()" 
-                    style="padding: 15px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-              👥 Все члены (${familyData.members?.length || 0})
-            </button>
-            
-            <button onclick="exportData()" 
-                    style="padding: 15px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-              📊 Экспорт данных
-            </button>
-          </div>
-          
-          <div id="adminContent" style="margin-top: 20px;"></div>
-          
-          <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #333;">
-            <button onclick="document.getElementById('${modalId}').remove()" 
-                    style="padding: 12px 30px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 0 auto; display: block;">
-              ❌ Закрыть панель
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', panelHTML);
-  } else if (code) {
-    alert('❌ Неверный код доступа');
-  }
-}
-
-// Вспомогательные функции
-function viewAllApplications() {
-  if (!familyData.applications || familyData.applications.length === 0) {
-    alert('📝 Заявок пока нет');
-    return;
-  }
-  
-  const list = familyData.applications.map(app => 
-    `📄 ID: ${app.ID || 'N/A'}\n👤 Ник: ${app.Ник || 'Нет'} (${app.Возраст || '?'} лет)\n💬 Discord: ${app.Discord || 'Нет'}\n📅 Дата: ${new Date(app['Дата подачи']).toLocaleDateString('ru-RU')}\n🔸 Статус: ${app.Статус || 'pending'}\n`
-  ).join('\n---\n');
-  
-  alert(`📝 ВСЕ ЗАЯВКИ (${familyData.applications.length}):\n\n${list}`);
-}
-
-function viewAllMembers() {
-  if (!familyData.members || familyData.members.length === 0) {
-    alert('👥 Членов пока нет');
-    return;
-  }
-  
-  const list = familyData.members.map(member => 
-    `👤 ${member['Ник в игре'] || member['Ник'] || 'Без ника'}\n🎭 ${member.Роль || 'Рекрут'}\n💬 ${member['Discord ID'] || 'Нет'}\n📅 ${new Date(member['Дата вступления']).toLocaleDateString('ru-RU')}\n🔸 Статус: ${member.Статус || 'active'}\n`
-  ).join('\n---\n');
-  
-  alert(`👥 ВСЕ ЧЛЕНЫ СЕМЬИ (${familyData.members.length}):\n\n${list}`);
-}
-
-function exportData() {
-  const dataStr = JSON.stringify(familyData, null, 2);
-  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(dataBlob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `continental-famq-data-${new Date().toISOString().split('T')[0]}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  
-  alert('📥 Данные экспортированы в JSON файл');
-}
-
-// Добавление скрытой админ-кнопки
-function addAdminButton() {
-  setTimeout(() => {
-    // Проверяем, не добавлена ли уже кнопка
-    if (document.getElementById('famq-admin-btn')) return;
-    
-    const adminBtn = document.createElement('div');
-    adminBtn.id = 'famq-admin-btn';
-    adminBtn.innerHTML = '👑';
-    adminBtn.title = 'Админ-панель Continental FamQ';
-    
-    adminBtn.style.cssText = `
-      position: fixed;
-      bottom: 30px;
-      left: 30px;
-      background: linear-gradient(135deg, #e94560 0%, #c2185b 100%);
-      color: white;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      cursor: pointer;
-      z-index: 9998;
-      opacity: 0.4;
-      transition: all 0.3s ease;
-      box-shadow: 0 6px 25px rgba(233, 69, 96, 0.5);
-      border: 2px solid white;
-    `;
-    
-    adminBtn.onclick = showAdminPanel;
-    adminBtn.onmouseover = () => {
-      adminBtn.style.opacity = '1';
-      adminBtn.style.transform = 'scale(1.1)';
-    };
-    adminBtn.onmouseout = () => {
-      adminBtn.style.opacity = '0.4';
-      adminBtn.style.transform = 'scale(1)';
-    };
-    
-    document.body.appendChild(adminBtn);
-    console.log('👑 Скрытая админ-кнопка добавлена');
-  }, 3000);
-}
-
-// Перезагрузить данные (можно вызвать из консоли)
-window.reloadFamQData = loadFamilyData;
-window.showFamQStats = updateStats;
-
-console.log('✅ Continental FamQ CRM скрипт загружен и готов к работе');
-</script>
 </body>
 </html>
