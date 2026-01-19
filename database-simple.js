@@ -32,7 +32,7 @@ async loadSheet(sheetName) {
     console.log(`Загрузка ${sheetName}...`);
     
     try {
-        const response = await fetch(`https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`);
+        const response = await fetch`https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tq=select%20*&sheet=${sheetName}&tqx=responseHandler:handleResponse`;
         
         if (!response.ok) {
             throw new Error(`Ошибка загрузки: ${response.status}`);
