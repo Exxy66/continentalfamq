@@ -2920,17 +2920,15 @@
             return getRoleByKey(user.role) || getRoleByKey('guest');
         }
 
-        // Проверить разрешение
-        function hasPermission(permission) {
-            const user = getCurrentUser();
-            if (!user) {
-                if (permission === 'view_news') return true;
-                return false;
-            }
-            
-            const role = getUserRole(user);
-            return role.permissions.includes(permission);
-        }
+       function hasPermission(user, permission) {
+    // Добавь проверки
+    if (!user || !user.role || !user.role.permissions) {
+        console.warn('Нет прав доступа: пользователь или роль не определены', user);
+        return false;
+    }
+    
+    return user.role.permissions.includes(permission);
+}
 
         // Обновить UI авторизации
         function updateAuthUI() {
