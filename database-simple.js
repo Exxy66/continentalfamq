@@ -18,52 +18,54 @@ class SimpleFamilyDatabase {
             roleCodes: 'КодыРолей'
         };
         
-        this.cache = {};
-        this.pendingChanges = [];
-        this.isInitialized = false;
+        // Храним данные напрямую в свойствах объекта
+        this.users = [];
+        this.applications = [];
+        this.blacklist = [];
+        this.news = [];
+        this.chat = [];
+        this.roles = [];
+        this.codes = [];
         
         console.log('🚀 База данных инициализирована. ID таблицы:', this.SPREADSHEET_ID);
     }
     
     // ========== ОСНОВНЫЕ МЕТОДЫ ==========
     
-  async loadSheet(sheetName) {
-    console.log(`Загрузка ${sheetName}...`);
-    
-    try {
-        // 1. ПРАВИЛЬНЫЙ URL с обратными кавычками
-        const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+    async loadSheet(sheetName) {
+        console.log(`📥 Загружаю ${sheetName}...`);
         
-        console.log('URL:', url); // для отладки
-        
-        // 2. ПРАВИЛЬНЫЙ fetch (без лишних аргументов)
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`Ошибка загрузки: ${response.status}`);
-        }
-        
-        const csvText = await response.text();
-        console.log(`${sheetName} загружены успешно. Длина: ${csvText.length} символов`);
-        
-        // 3. Преобразуем CSV в массив
-        return this.parseCSV(csvText);
-        
-    } catch (error) {
-        console.error(`Ошибка загрузки ${sheetName}:`, error.message);
-        
-        // 4. Пробуем загрузить из кеша
-        if (this.getFromCache) {
-            const cached = this.getFromCache(sheetName);
-            if (cached && cached.length > 0) {
-                console.log(`Использую кеш для ${sheetName}: ${cached.length} записей`);
-                return cached;
+        try {
+            // ПРАВИЛЬНЫЙ URL для загрузки CSV
+            const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+            
+            console.log('🔗 URL:', url);
+            
+            // Загружаем данные
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
             }
+            
+            const csvText = await response.text();
+            
+            // Проверяем, что данные не пустые
+            if (!csvText || csvText.trim().length === 0) {
+                console.warn(`⚠️ Таблица "${sheetName}" пустая`);
+                return [];
+            }
+            
+            console.log(`✅ ${sheetName} загружены: ${csvText.length} символов`);
+            
+            // Преобразуем CSV в массив объектов
+            return this.parseCSV(csvText);
+            
+        } catch (error) {
+            console.error(`❌ Ошибка загрузки ${sheetName}:`, error.message);
+            return []; // Возвращаем пустой массив при ошибке
         }
-        
-        return [];
     }
-}
     
     // Парсит CSV в массив объектов
     parseCSV(csvText) {
@@ -139,154 +141,237 @@ class SimpleFamilyDatabase {
         return values;
     }
     
-    // ========== КЕШИРОВАНИЕ ==========
+    // ========== ПРЯМАЯ СИНХРОНИЗАЦИЯ ==========
     
-    // Сохраняет данные в локальное хранилище
-    saveToCache(sheetName, data) {
-        const key = `famq_cache_${sheetName}`;
-        localStorage.setItem(key, JSON.stringify({
-            data: data,
-            timestamp: Date.now()
-        }));
-    }
-    
-    // Получает данные из кеша
-    getFromCache(sheetName) {
-        const key = `famq_cache_${sheetName}`;
-        const cached = localStorage.getItem(key);
-        
-        if (cached) {
-            try {
-                const parsed = JSON.parse(cached);
-                const age = Date.now() - parsed.timestamp;
-                
-                // Используем кеш если ему меньше 10 минут
-                if (age < 10 * 60 * 1000) {
-                    return parsed.data;
-                }
-            } catch (error) {
-                console.warn('Ошибка парсинга кеша:', error);
-            }
-        }
-        
-        return [];
-    }
-    
-    // ========== СИНХРОНИЗАЦИЯ ВСЕХ ДАННЫХ ==========
-    
-    async syncAll() {
+    async syncAllData() {
         console.log('🔄 Начинаю синхронизацию всех данных...');
         
-        try {
-            const promises = Object.entries(this.sheets).map(async ([key, sheetName]) => {
-                try {
-                    const data = await this.loadSheet(sheetName);
-                    this.cache[key] = data;
-                    this.saveToCache(sheetName, data);
-                    return true;
-                } catch (error) {
-                    console.error(`Ошибка синхронизации ${sheetName}:`, error);
-                    return false;
-                }
-            });
-            
-            await Promise.all(promises);
-            // Проверяем, были ли ошибки в предыдущих сообщениях
-const logEntries = performance.getEntriesByType('resource');
-const hasErrors = logEntries.some(entry => 
-    entry.name.includes('docs.google.com') && 
-    (entry.responseStatus || 0) >= 400
-);
-
-if (hasErrors) {
-    console.log("⚠️ Синхронизация завершена с ошибками");
-} else {
-    console.log("✅ Все данные синхронизированы");
-}
-            this.isInitialized = true;
-            
-            // Сохраняем время последней синхронизации
-            localStorage.setItem('famq_last_sync', Date.now().toString());
-            
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Ошибка синхронизации:', error);
-            return false;
-        }
-    }
-    
-    async syncTable(tableName) {
-        const sheetName = this.sheets[tableName];
-        if (!sheetName) return false;
+        let successCount = 0;
+        let errorCount = 0;
         
+        // Загружаем каждую таблицу и сохраняем в свойства
         try {
-            const data = await this.loadSheet(sheetName);
-            this.cache[tableName] = data;
-            this.saveToCache(sheetName, data);
-            return true;
+            // 1. Пользователи
+            try {
+                this.users = await this.loadSheet(this.sheets.users);
+                console.log(`✅ Пользователи: ${this.users.length} записей`);
+                successCount++;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки пользователей:', error);
+                errorCount++;
+            }
+            
+            // 2. Заявки
+            try {
+                this.applications = await this.loadSheet(this.sheets.applications);
+                console.log(`✅ Заявки: ${this.applications.length} записей`);
+                successCount++;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки заявок:', error);
+                errorCount++;
+            }
+            
+            // 3. Черный список
+            try {
+                this.blacklist = await this.loadSheet(this.sheets.blacklist);
+                console.log(`✅ Черный список: ${this.blacklist.length} записей`);
+                successCount++;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки черного списка:', error);
+                errorCount++;
+            }
+            
+            // 4. Новости
+            try {
+                this.news = await this.loadSheet(this.sheets.news);
+                console.log(`✅ Новости: ${this.news.length} записей`);
+                successCount++;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки новостей:', error);
+                errorCount++;
+            }
+            
+            // 5. Чат
+            try {
+                this.chat = await this.loadSheet(this.sheets.chat);
+                console.log(`✅ Чат: ${this.chat.length} записей`);
+                successCount++;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки чата:', error);
+                errorCount++;
+            }
+            
+            // 6. Роли
+            try {
+                this.roles = await this.loadSheet(this.sheets.roles);
+                console.log(`✅ Роли: ${this.roles.length} записей`);
+                successCount++;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки ролей:', error);
+                errorCount++;
+            }
+            
+            // 7. КодыРолей
+            try {
+                this.codes = await this.loadSheet(this.sheets.roleCodes);
+                console.log(`✅ КодыРолей: ${this.codes.length} записей`);
+                successCount++;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки кодов ролей:', error);
+                errorCount++;
+            }
+            
+            // ИТОГ
+            console.log(`📊 Результат: ${successCount} успешно, ${errorCount} с ошибками`);
+            
+            if (errorCount === 0) {
+                console.log('✅ Все данные синхронизированы!');
+            } else {
+                console.log(`⚠️ Синхронизация завершена с ${errorCount} ошибками`);
+            }
+            
+            // Автоматически обновляем роль текущего пользователя
+            this.updateCurrentUserRole();
+            
+            return {
+                success: successCount,
+                errors: errorCount,
+                timestamp: new Date().toISOString()
+            };
+            
         } catch (error) {
-            console.error(`Ошибка синхронизации ${tableName}:`, error);
-            return false;
+            console.error('❌ Критическая ошибка синхронизации:', error);
+            return { success: 0, errors: 7, error: error.message };
         }
     }
     
-    // ========== МЕТОДЫ ДЛЯ РАБОТЫ С ДАННЫМИ ==========
+    // ========== МЕТОДЫ ДЛЯ ПОЛУЧЕНИЯ ДАННЫХ ==========
+    // Теперь просто возвращают данные из свойств
     
-    // Получить все заявки
-    async getApplications() {
-        if (!this.cache.applications) {
-            await this.syncTable('applications');
-        }
-        return this.cache.applications || [];
-    }
-    
-    // Получить черный список
-    async getBlacklist() {
-        if (!this.cache.blacklist) {
-            await this.syncTable('blacklist');
-        }
-        return this.cache.blacklist || [];
-    }
-    
-    // Получить новости
-    async getNews() {
-        if (!this.cache.news) {
-            await this.syncTable('news');
-        }
-        return this.cache.news || [];
-    }
-    
-    // Получить сообщения чата
-    async getChat() {
-        if (!this.cache.chat) {
-            await this.syncTable('chat');
-        }
-        return this.cache.chat || [];
-    }
-    
-    // Получить пользователей
     async getUsers() {
-        if (!this.cache.users) {
-            await this.syncTable('users');
+        if (this.users.length === 0) {
+            await this.syncAllData();
         }
-        return this.cache.users || [];
+        return this.users;
     }
     
-    // Получить роли
+    async getApplications() {
+        if (this.applications.length === 0) {
+            await this.syncAllData();
+        }
+        return this.applications;
+    }
+    
+    async getBlacklist() {
+        if (this.blacklist.length === 0) {
+            await this.syncAllData();
+        }
+        return this.blacklist;
+    }
+    
+    async getNews() {
+        if (this.news.length === 0) {
+            await this.syncAllData();
+        }
+        return this.news;
+    }
+    
+    async getChat() {
+        if (this.chat.length === 0) {
+            await this.syncAllData();
+        }
+        return this.chat;
+    }
+    
     async getRoles() {
-        if (!this.cache.roles) {
-            await this.syncTable('roles');
+        if (this.roles.length === 0) {
+            await this.syncAllData();
         }
-        return this.cache.roles || [];
+        return this.roles;
     }
     
-    // Получить коды ролей
     async getRoleCodes() {
-        if (!this.cache.roleCodes) {
-            await this.syncTable('roleCodes');
+        if (this.codes.length === 0) {
+            await this.syncAllData();
         }
-        return this.cache.roleCodes || [];
+        return this.codes;
+    }
+    
+    // ========== ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ ==========
+    
+    // Обновляет роль текущего пользователя из таблицы
+    async updateCurrentUserRole() {
+        try {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            
+            if (currentUser.discordid) {
+                const userInDB = this.users.find(u => u.discordid === currentUser.discordid);
+                
+                if (userInDB && userInDB.role !== currentUser.role) {
+                    console.log(`🔄 Обновляю роль пользователя ${userInDB.username}: ${currentUser.role} → ${userInDB.role}`);
+                    
+                    // Обновляем в localStorage
+                    localStorage.setItem('userRole', userInDB.role);
+                    localStorage.setItem('currentUser', JSON.stringify(userInDB));
+                    
+                    // Отправляем событие об обновлении
+                    this.triggerEvent('userRoleUpdated', userInDB);
+                }
+            }
+        } catch (error) {
+            console.warn('Не удалось обновить роль пользователя:', error);
+        }
+    }
+    
+    // Ищет пользователя по discordid
+    async findUserByDiscordId(discordid) {
+        if (this.users.length === 0) {
+            await this.syncAllData();
+        }
+        return this.users.find(user => user.discordid === discordid.toString());
+    }
+    
+    // Ищет пользователя по username
+    async findUserByUsername(username) {
+        if (this.users.length === 0) {
+            await this.syncAllData();
+        }
+        return this.users.find(user => user.username.toLowerCase() === username.toLowerCase());
+    }
+    
+    // Проверяет код роли
+    async validateRoleCode(code) {
+        if (this.codes.length === 0) {
+            await this.syncAllData();
+        }
+        
+        return this.codes.find(c => 
+            c.role === code || 
+            c.code === code || 
+            c.roleKey === code
+        );
+    }
+    
+    // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==========
+    
+    // Отправляет событие
+    triggerEvent(eventName, data) {
+        const event = new CustomEvent(eventName, { detail: data });
+        window.dispatchEvent(event);
+    }
+    
+    // Получает информацию о состоянии
+    getStatus() {
+        return {
+            users: this.users.length,
+            applications: this.applications.length,
+            blacklist: this.blacklist.length,
+            news: this.news.length,
+            chat: this.chat.length,
+            roles: this.roles.length,
+            codes: this.codes.length,
+            timestamp: new Date().toISOString()
+        };
     }
     
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -294,68 +379,32 @@ if (hasErrors) {
     async initialize() {
         console.log('🚀 Инициализация базы данных...');
         
-        // Проверяем подключение к интернету
-        if (!navigator.onLine) {
-            console.log('📴 Офлайн режим. Загружаю данные из кеша...');
-            
-            // Загружаем все из кеша
-            Object.keys(this.sheets).forEach(key => {
-                this.cache[key] = this.getFromCache(this.sheets[key]);
-            });
-            
-            this.isInitialized = true;
-            return this.cache;
-        }
-        
-        // Загружаем данные из Google Sheets
-        await this.syncAll();
-        
-        // Настраиваем автосинхронизацию
-        this.setupAutoSync();
-        
-        return this.cache;
-    }
-    
-    // Настройка автосинхронизации
-    setupAutoSync() {
-        // Синхронизация каждые 2 минуты
-        setInterval(async () => {
-            if (navigator.onLine) {
-                await this.syncAll();
-            }
-        }, 2 * 60 * 1000);
-        
-        // Синхронизация при возвращении онлайн
-        window.addEventListener('online', async () => {
-            console.log('🌐 Восстановлено соединение. Синхронизирую...');
-            await this.syncAll();
-        });
-    }
-    
-    // ========== УТИЛИТЫ ==========
-    
-    // Проверяет доступность Google Sheets
-    async testConnection() {
         try {
-            const testUrl = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Роли`;
-            const response = await fetch(testUrl, { method: 'HEAD' });
-            return response.ok;
+            const result = await this.syncAllData();
+            console.log('✅ База данных инициализирована');
+            console.log('📊 Статус:', this.getStatus());
+            return result;
         } catch (error) {
-            return false;
+            console.error('❌ Ошибка инициализации:', error);
+            return { success: false, error: error.message };
         }
-    }
-    
-    // Получает информацию о последней синхронизации
-    getSyncInfo() {
-        const lastSync = localStorage.getItem('famq_last_sync');
-        return {
-            isOnline: navigator.onLine,
-            lastSync: lastSync ? new Date(parseInt(lastSync)).toLocaleTimeString() : 'Никогда',
-            cacheSize: Object.keys(this.cache).reduce((total, key) => 
-                total + (this.cache[key] ? this.cache[key].length : 0), 0)
-        };
     }
 }
 
 // Создаем глобальный экземпляр базы данных
 window.FamilyDatabase = new SimpleFamilyDatabase();
+
+// Автоматическая инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('📄 Страница загружена, инициализирую базу данных...');
+    
+    // Даем странице немного загрузиться
+    setTimeout(async () => {
+        await window.FamilyDatabase.initialize();
+        
+        // Проверяем и обновляем роль текущего пользователя
+        await window.FamilyDatabase.updateCurrentUserRole();
+        
+        console.log('✅ Готово! Данные загружены из таблицы.');
+    }, 1000);
+});
