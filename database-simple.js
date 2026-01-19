@@ -58,8 +58,14 @@ class SimpleFamilyDatabase {
             
             console.log(`✅ ${sheetName} загружены: ${csvText.length} символов`);
             
+            // ДЛЯ ОТЛАДКИ: смотрим что пришло
+            console.log(`🔍 Первые 200 символов ${sheetName}:`, csvText.substring(0, 200));
+            
             // Преобразуем CSV в массив объектов
-            return this.parseCSV(csvText);
+            const data = this.parseCSVSimple(csvText);
+            console.log(`📊 ${sheetName} распарсено: ${data.length} записей`);
+            
+            return data;
             
         } catch (error) {
             console.error(`❌ Ошибка загрузки ${sheetName}:`, error.message);
@@ -67,96 +73,89 @@ class SimpleFamilyDatabase {
         }
     }
     
-    // ПРОСТОЙ парсер CSV (исправленная версия)
-    parseCSV(csvText) {
-        try {
-            // Убираем BOM символ если есть
-            if (csvText.charCodeAt(0) === 0xFEFF) {
-                csvText = csvText.substring(1);
-            }
-            
-            const lines = csvText.trim().split('\n');
-            
-            if (lines.length < 2) {
-                console.log('CSV пустой или только заголовки');
-                return [];
-            }
-            
-            // Первая строка - заголовки
-            const headers = this.splitCSVLine(lines[0]).map(h => 
-                h.trim().replace(/^"|"$/g, '')
-            );
-            
-            const data = [];
-            
-            // Обрабатываем остальные строки
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue; // Пропускаем пустые строки
-                
-                const values = this.splitCSVLine(line);
-                
-                if (values.length === 0) continue;
-                
-                const item = {};
-                let hasData = false;
-                
-                // Сопоставляем значения с заголовками
-                for (let j = 0; j < Math.min(headers.length, values.length); j++) {
-                    let value = values[j].trim().replace(/^"|"$/g, '');
-                    
-                    // Если значение пустое, пропускаем
-                    if (value === '' || value === '""') continue;
-                    
-                    item[headers[j]] = value;
-                    hasData = true;
-                }
-                
-                if (hasData && Object.keys(item).length > 0) {
-                    data.push(item);
-                }
-            }
-            
-            console.log(`📊 CSV распарсен: ${data.length} записей`);
-            return data;
-            
-        } catch (error) {
-            console.error('❌ Ошибка парсинга CSV:', error);
-            console.log('Сырой текст для отладки:', csvText.substring(0, 200));
+    // СУПЕР-ПРОСТОЙ парсер CSV (работает с любыми данными)
+    parseCSVSimple(csvText) {
+        const lines = csvText.split('\n').filter(line => line.trim() !== '');
+        
+        if (lines.length < 2) {
+            console.log('❌ CSV пустой или только заголовки');
             return [];
         }
-    }
-    
-    // Разделяет строку CSV с учетом кавычек
-    splitCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
         
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
+        const result = [];
+        
+        // Пытаемся разные способы парсинга
+        try {
+            // СПОСОБ 1: Простое разделение по запятой
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
             
-            if (char === '"') {
-                // Проверяем двойные кавычки ""
-                if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-                    current += '"';
-                    i++; // Пропускаем следующую кавычку
-                } else {
-                    inQuotes = !inQuotes;
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i];
+                if (!line.trim()) continue;
+                
+                const values = line.split(',');
+                const item = {};
+                
+                for (let j = 0; j < Math.min(headers.length, values.length); j++) {
+                    let value = values[j].trim();
+                    // Убираем кавычки если есть
+                    value = value.replace(/^"|"$/g, '');
+                    
+                    if (value !== '') {
+                        item[headers[j]] = value;
+                    }
                 }
-            } else if (char === ',' && !inQuotes) {
-                result.push(current);
-                current = '';
-            } else {
-                current += char;
+                
+                if (Object.keys(item).length > 0) {
+                    result.push(item);
+                }
             }
+            
+            if (result.length > 0) {
+                console.log(`✅ Парсинг способом 1: ${result.length} записей`);
+                return result;
+            }
+        } catch (e) {
+            console.log('Способ 1 не сработал:', e.message);
         }
         
-        result.push(current); // Добавляем последнее значение
-        return result;
+        // Если первый способ не сработал, пробуем второй
+        try {
+            const lines2 = csvText.split('\r\n').filter(line => line.trim() !== '');
+            if (lines2.length < 2) return [];
+            
+            const headers2 = lines2[0].split('\t').map(h => h.trim().replace(/^"|"$/g, ''));
+            const result2 = [];
+            
+            for (let i = 1; i < lines2.length; i++) {
+                const values2 = lines2[i].split('\t');
+                const item2 = {};
+                
+                for (let j = 0; j < Math.min(headers2.length, values2.length); j++) {
+                    let value = values2[j].trim().replace(/^"|"$/g, '');
+                    if (value !== '') {
+                        item2[headers2[j]] = value;
+                    }
+                }
+                
+                if (Object.keys(item2).length > 0) {
+                    result2.push(item2);
+                }
+            }
+            
+            if (result2.length > 0) {
+                console.log(`✅ Парсинг способом 2: ${result2.length} записей`);
+                return result2;
+            }
+        } catch (e) {
+            console.log('Способ 2 не сработал:', e.message);
+        }
+        
+        console.log('❌ Не удалось распарсить CSV');
+        return [];
     }
     
-    // ========== ПРЯМАЯ СИНХРОНИЗАЦИЯ ==========
+    // ========== СИНХРОНИЗАЦИЯ ==========
     
     async syncAllData() {
         console.log('🔄 Начинаю синхронизацию всех данных...');
@@ -164,237 +163,165 @@ class SimpleFamilyDatabase {
         let successCount = 0;
         let errorCount = 0;
         
-        // Загружаем каждую таблицу и сохраняем в свойства
-        try {
-            // 1. Пользователи
+        // Загружаем таблицы ПО ОЧЕРЕДИ для лучшей отладки
+        const tables = [
+            { key: 'users', name: 'Пользователи' },
+            { key: 'applications', name: 'Заявки' },
+            { key: 'blacklist', name: 'ЧерныйСписок' },
+            { key: 'news', name: 'Новости' },
+            { key: 'chat', name: 'Чат' },
+            { key: 'roles', name: 'Роли' },
+            { key: 'codes', name: 'КодыРолей' }
+        ];
+        
+        for (const table of tables) {
             try {
-                this.users = await this.loadSheet(this.sheets.users);
-                console.log(`✅ Пользователи: ${this.users.length} записей`);
-                if (this.users.length > 0) {
-                    console.log('Пример пользователя:', this.users[0]);
+                const data = await this.loadSheet(table.name);
+                this[table.key] = data;
+                console.log(`✅ ${table.name}: ${data.length} записей`);
+                
+                // Показываем пример данных для отладки
+                if (data.length > 0 && table.key === 'users') {
+                    console.log('👤 Пример пользователя:', data[0]);
                 }
-                successCount++;
-            } catch (error) {
-                console.error('❌ Ошибка загрузки пользователей:', error);
-                errorCount++;
-            }
-            
-            // 2. Заявки
-            try {
-                this.applications = await this.loadSheet(this.sheets.applications);
-                console.log(`✅ Заявки: ${this.applications.length} записей`);
-                if (this.applications.length > 0) {
-                    console.log('Пример заявки:', this.applications[0]);
+                if (data.length > 0 && table.key === 'codes') {
+                    console.log('🔑 Пример кода роли:', data[0]);
                 }
+                
                 successCount++;
             } catch (error) {
-                console.error('❌ Ошибка загрузки заявок:', error);
+                console.error(`❌ Ошибка загрузки ${table.name}:`, error);
                 errorCount++;
             }
-            
-            // 3. Черный список
-            try {
-                this.blacklist = await this.loadSheet(this.sheets.blacklist);
-                console.log(`✅ Черный список: ${this.blacklist.length} записей`);
-                successCount++;
-            } catch (error) {
-                console.error('❌ Ошибка загрузки черного списка:', error);
-                errorCount++;
-            }
-            
-            // 4. Новости
-            try {
-                this.news = await this.loadSheet(this.sheets.news);
-                console.log(`✅ Новости: ${this.news.length} записей`);
-                successCount++;
-            } catch (error) {
-                console.error('❌ Ошибка загрузки новостей:', error);
-                errorCount++;
-            }
-            
-            // 5. Чат
-            try {
-                this.chat = await this.loadSheet(this.sheets.chat);
-                console.log(`✅ Чат: ${this.chat.length} записей`);
-                successCount++;
-            } catch (error) {
-                console.error('❌ Ошибка загрузки чата:', error);
-                errorCount++;
-            }
-            
-            // 6. Роли
-            try {
-                this.roles = await this.loadSheet(this.sheets.roles);
-                console.log(`✅ Роли: ${this.roles.length} записей`);
-                if (this.roles.length > 0) {
-                    console.log('Пример роли:', this.roles[0]);
-                }
-                successCount++;
-            } catch (error) {
-                console.error('❌ Ошибка загрузки ролей:', error);
-                errorCount++;
-            }
-            
-            // 7. КодыРолей
-            try {
-                this.codes = await this.loadSheet(this.sheets.roleCodes);
-                console.log(`✅ КодыРолей: ${this.codes.length} записей`);
-                if (this.codes.length > 0) {
-                    console.log('Пример кода:', this.codes[0]);
-                }
-                successCount++;
-            } catch (error) {
-                console.error('❌ Ошибка загрузки кодов ролей:', error);
-                errorCount++;
-            }
-            
-            // ИТОГ
-            console.log(`📊 Результат: ${successCount} успешно, ${errorCount} с ошибками`);
-            
-            if (errorCount === 0) {
-                console.log('✅ Все данные синхронизированы!');
-            } else {
-                console.log(`⚠️ Синхронизация завершена с ${errorCount} ошибками`);
-            }
-            
-            // Автоматически обновляем роль текущего пользователя
-            this.updateCurrentUserRole();
-            
-            return {
-                success: successCount,
-                errors: errorCount,
-                timestamp: new Date().toISOString()
-            };
-            
-        } catch (error) {
-            console.error('❌ Критическая ошибка синхронизации:', error);
-            return { success: 0, errors: 7, error: error.message };
         }
+        
+        // ИТОГ
+        console.log(`📊 Результат: ${successCount} успешно, ${errorCount} с ошибками`);
+        
+        if (errorCount === 0) {
+            console.log('✅ Все данные синхронизированы!');
+        } else {
+            console.log(`⚠️ Синхронизация завершена с ${errorCount} ошибками`);
+        }
+        
+        // Обновляем роль пользователя
+        this.updateCurrentUserRole();
+        
+        return {
+            success: successCount,
+            errors: errorCount,
+            timestamp: new Date().toISOString()
+        };
+    }
+    
+    // ========== МЕТОДЫ ДЛЯ СОВМЕСТИМОСТИ ==========
+    
+    // Этот метод ВАЖЕН - его вызывает другой файл!
+    async testConnection() {
+        console.log('🔍 testConnection() вызван из другого файла...');
+        try {
+            // Простая проверка - загружаем маленькую таблицу
+            const testData = await this.loadSheet('Роли');
+            const isConnected = testData.length > 0;
+            
+            console.log(`✅ testConnection: ${isConnected ? 'РАБОТАЕТ' : 'НЕ РАБОТАЕТ'}`);
+            return isConnected;
+        } catch (error) {
+            console.error('❌ testConnection ошибка:', error);
+            return false;
+        }
+    }
+    
+    // Старые методы для совместимости
+    async syncAll() {
+        return await this.syncAllData();
+    }
+    
+    async initialize() {
+        console.log('🚀 Инициализация базы данных...');
+        const result = await this.syncAllData();
+        console.log('✅ База данных инициализирована');
+        console.log('📊 Статус:', this.getStatus());
+        return result;
     }
     
     // ========== МЕТОДЫ ДЛЯ ПОЛУЧЕНИЯ ДАННЫХ ==========
     
     async getUsers() {
-        if (this.users.length === 0) {
-            await this.syncAllData();
-        }
+        if (this.users.length === 0) await this.syncAllData();
         return this.users;
     }
     
     async getApplications() {
-        if (this.applications.length === 0) {
-            await this.syncAllData();
-        }
+        if (this.applications.length === 0) await this.syncAllData();
         return this.applications;
     }
     
     async getBlacklist() {
-        if (this.blacklist.length === 0) {
-            await this.syncAllData();
-        }
+        if (this.blacklist.length === 0) await this.syncAllData();
         return this.blacklist;
     }
     
     async getNews() {
-        if (this.news.length === 0) {
-            await this.syncAllData();
-        }
+        if (this.news.length === 0) await this.syncAllData();
         return this.news;
     }
     
     async getChat() {
-        if (this.chat.length === 0) {
-            await this.syncAllData();
-        }
+        if (this.chat.length === 0) await this.syncAllData();
         return this.chat;
     }
     
     async getRoles() {
-        if (this.roles.length === 0) {
-            await this.syncAllData();
-        }
+        if (this.roles.length === 0) await this.syncAllData();
         return this.roles;
     }
     
     async getRoleCodes() {
-        if (this.codes.length === 0) {
-            await this.syncAllData();
-        }
+        if (this.codes.length === 0) await this.syncAllData();
         return this.codes;
     }
     
-    // ========== ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ ==========
+    // ========== ПОЛЬЗОВАТЕЛЬСКИЕ МЕТОДЫ ==========
     
-    // Обновляет роль текущего пользователя из таблицы
     async updateCurrentUserRole() {
         try {
             const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
             
             if (currentUser.discordid) {
+                // Если users ещё не загружены, загружаем
+                if (this.users.length === 0) {
+                    await this.syncAllData();
+                }
+                
                 const userInDB = this.users.find(u => u.discordid === currentUser.discordid);
                 
                 if (userInDB) {
-                    console.log(`👤 Найден пользователь в БД: ${userInDB.username}, роль: ${userInDB.role}`);
+                    console.log(`👤 Найден в БД: ${userInDB.username}, роль: ${userInDB.role}`);
                     
-                    if (userInDB.role !== currentUser.role) {
-                        console.log(`🔄 Обновляю роль: ${currentUser.role || 'неизвестно'} → ${userInDB.role}`);
-                        
-                        // Обновляем в localStorage
-                        localStorage.setItem('userRole', userInDB.role);
-                        localStorage.setItem('currentUser', JSON.stringify(userInDB));
-                        
-                        // Отправляем событие об обновлении
-                        this.triggerEvent('userRoleUpdated', userInDB);
-                    } else {
-                        console.log(`✅ Роль совпадает: ${userInDB.role}`);
-                    }
-                } else {
-                    console.warn(`⚠️ Пользователь с discordid ${currentUser.discordid} не найден в БД`);
+                    // Всегда обновляем из БД, даже если роль совпадает
+                    localStorage.setItem('userRole', userInDB.role);
+                    localStorage.setItem('currentUser', JSON.stringify(userInDB));
+                    
+                    console.log(`🎭 Роль обновлена: ${userInDB.role}`);
+                    
+                    // Событие для интерфейса
+                    const event = new CustomEvent('userRoleUpdated', { detail: userInDB });
+                    window.dispatchEvent(event);
                 }
             }
         } catch (error) {
-            console.warn('Не удалось обновить роль пользователя:', error);
+            console.warn('Не удалось обновить роль:', error);
         }
     }
     
-    // Ищет пользователя по discordid
     async findUserByDiscordId(discordid) {
-        if (this.users.length === 0) {
-            await this.syncAllData();
-        }
-        return this.users.find(user => user.discordid === discordid.toString());
-    }
-    
-    // Ищет пользователя по username
-    async findUserByUsername(username) {
-        if (this.users.length === 0) {
-            await this.syncAllData();
-        }
-        return this.users.find(user => user.username.toLowerCase() === username.toLowerCase());
-    }
-    
-    // Проверяет код роли
-    async validateRoleCode(code) {
-        if (this.codes.length === 0) {
-            await this.syncAllData();
-        }
-        
-        return this.codes.find(c => 
-            c.role === code || 
-            c.code === code || 
-            c.roleKey === code
-        );
+        if (this.users.length === 0) await this.syncAllData();
+        return this.users.find(u => u.discordid === discordid.toString());
     }
     
     // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==========
     
-    // Отправляет событие
-    triggerEvent(eventName, data) {
-        const event = new CustomEvent(eventName, { detail: data });
-        window.dispatchEvent(event);
-    }
-    
-    // Получает информацию о состоянии
     getStatus() {
         return {
             users: this.users.length,
@@ -404,93 +331,80 @@ class SimpleFamilyDatabase {
             chat: this.chat.length,
             roles: this.roles.length,
             codes: this.codes.length,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toLocaleTimeString()
         };
     }
     
-    // ========== ДЛЯ СОВМЕСТИМОСТИ ==========
+    // ========== ДЕБАГ МЕТОДЫ ==========
     
-    // Метод для обратной совместимости (вызывается в другом файле)
-    async testConnection() {
-        console.log('🔍 Проверяю подключение к таблице...');
-        try {
-            const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Роли`;
-            const response = await fetch(url, { method: 'HEAD' });
-            
-            if (response.ok) {
-                console.log('✅ Подключение к Google Sheets работает!');
-                return true;
-            } else {
-                console.warn(`⚠️ Подключение есть, но таблица недоступна: ${response.status}`);
-                return false;
-            }
-        } catch (error) {
-            console.error('❌ Ошибка подключения:', error.message);
-            return false;
-        }
-    }
-    
-    // Старый метод syncAll для совместимости
-    async syncAll() {
-        console.log('⚠️ Используется устаревший метод syncAll(), используйте syncAllData()');
-        return await this.syncAllData();
-    }
-    
-    // Старый метод initialize для совместимости
-    async initialize() {
-        console.log('🚀 Инициализация базы данных...');
+    async debugAllTables() {
+        console.log('🐛 ДЕБАГ: Проверяю все таблицы...');
         
-        try {
-            const result = await this.syncAllData();
-            console.log('✅ База данных инициализирована');
-            console.log('📊 Статус:', this.getStatus());
-            return result;
-        } catch (error) {
-            console.error('❌ Ошибка инициализации:', error);
-            return { success: false, error: error.message };
+        for (const [key, sheetName] of Object.entries(this.sheets)) {
+            console.log(`\n=== ${sheetName} ===`);
+            
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                console.log(`Длина: ${text.length} символов`);
+                console.log('Первые 300 символов:');
+                console.log(text.substring(0, 300));
+                
+                // Пробуем разные способы парсинга
+                const lines = text.split('\n');
+                console.log(`Строк: ${lines.length}`);
+                console.log('Первая строка (заголовки):', lines[0]);
+                console.log('Вторая строка (данные):', lines[1] || 'нет данных');
+                
+            } catch (error) {
+                console.error(`Ошибка: ${error.message}`);
+            }
         }
     }
 }
 
-// Создаем глобальный экземпляр базы данных
+// Создаем глобальный экземпляр
 window.FamilyDatabase = new SimpleFamilyDatabase();
+window.database = window.FamilyDatabase; // Дублируем для совместимости
 
-// Автоматическая инициализация при загрузке страницы
+// Автоматическая инициализация
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📄 Страница загружена, инициализирую базу данных...');
+    console.log('📄 Страница загружена...');
     
-    // Даем странице немного загрузиться
     setTimeout(async () => {
         try {
-            // Инициализируем базу данных
+            // 1. Инициализируем
             await window.FamilyDatabase.initialize();
             
-            // Проверяем и обновляем роль текущего пользователя
-            await window.FamilyDatabase.updateCurrentUserRole();
-            
-            console.log('✅ Готово! Данные загружены из таблицы.');
-            
-            // Проверяем себя в базе
+            // 2. Находим себя
             const me = await window.FamilyDatabase.findUserByDiscordId("9134649962671");
             if (me) {
-                console.log('👤 Мой профиль в БД:', me);
-                console.log('🎭 Моя роль в БД:', me.role);
+                console.log('🎉 Я в базе:', me);
                 
-                // Если в БД админ, а в localStorage нет - обновляем
-                if (me.role === 'admin' && localStorage.getItem('userRole') !== 'admin') {
-                    localStorage.setItem('userRole', 'admin');
-                    localStorage.setItem('currentUser', JSON.stringify(me));
-                    console.log('🎉 Автоматически выдана роль админа из таблицы!');
-                }
+                // 3. Обязательно ставим роль из БД
+                localStorage.setItem('userRole', me.role);
+                localStorage.setItem('currentUser', JSON.stringify(me));
+                
+                // 4. Говорим интерфейсу обновиться
+                const event = new Event('userDataLoaded');
+                window.dispatchEvent(event);
+                
+                console.log(`👑 Роль установлена: ${me.role}`);
             }
             
+            // 5. Для отладки можно посмотреть все данные
+            console.log('📋 Все пользователи:', window.FamilyDatabase.users);
+            console.log('🔑 Все коды:', window.FamilyDatabase.codes);
+            
         } catch (error) {
-            console.error('❌ Ошибка при инициализации:', error);
+            console.error('❌ Ошибка запуска:', error);
         }
-    }, 1000);
+    }, 1500);
 });
 
-// Экспорт для использования в других модулях
+// Экспорт
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SimpleFamilyDatabase;
 }
