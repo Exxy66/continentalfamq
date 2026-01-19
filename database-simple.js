@@ -182,7 +182,18 @@ async loadSheet(sheetName) {
             });
             
             await Promise.all(promises);
-            console.log('✅ Все данные синхронизированы');
+            // Проверяем, были ли ошибки в предыдущих сообщениях
+const logEntries = performance.getEntriesByType('resource');
+const hasErrors = logEntries.some(entry => 
+    entry.name.includes('docs.google.com') && 
+    (entry.responseStatus || 0) >= 400
+);
+
+if (hasErrors) {
+    console.log("⚠️ Синхронизация завершена с ошибками");
+} else {
+    console.log("✅ Все данные синхронизированы");
+}
             this.isInitialized = true;
             
             // Сохраняем время последней синхронизации
