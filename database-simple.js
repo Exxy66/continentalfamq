@@ -67,55 +67,69 @@ class SimpleFamilyDatabase {
         }
     }
     
-    // Парсит CSV в массив объектов
+    // ПРОСТОЙ парсер CSV (исправленная версия)
     parseCSV(csvText) {
-        const lines = csvText.split('\n').filter(line => line.trim() !== '');
-        
-        if (lines.length < 2) return [];
-        
-        // Получаем заголовки (первая строка)
-        const headers = this.parseCSVLine(lines[0]);
-        
-        // Парсим данные
-        const data = [];
-        
-        for (let i = 1; i < lines.length; i++) {
-            const values = this.parseCSVLine(lines[i]);
-            const item = {};
-            
-            headers.forEach((header, index) => {
-                if (values[index] !== undefined) {
-                    let value = values[index];
-                    
-                    // Убираем кавычки
-                    value = value.replace(/^"|"$/g, '');
-                    
-                    // Пытаемся распарсить JSON
-                    if ((value.startsWith('[') && value.endsWith(']')) || 
-                        (value.startsWith('{') && value.endsWith('}'))) {
-                        try {
-                            item[header] = JSON.parse(value);
-                        } catch {
-                            item[header] = value;
-                        }
-                    } else {
-                        item[header] = value;
-                    }
-                }
-            });
-            
-            // Добавляем только если есть данные
-            if (Object.keys(item).length > 0) {
-                data.push(item);
+        try {
+            // Убираем BOM символ если есть
+            if (csvText.charCodeAt(0) === 0xFEFF) {
+                csvText = csvText.substring(1);
             }
+            
+            const lines = csvText.trim().split('\n');
+            
+            if (lines.length < 2) {
+                console.log('CSV пустой или только заголовки');
+                return [];
+            }
+            
+            // Первая строка - заголовки
+            const headers = this.splitCSVLine(lines[0]).map(h => 
+                h.trim().replace(/^"|"$/g, '')
+            );
+            
+            const data = [];
+            
+            // Обрабатываем остальные строки
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue; // Пропускаем пустые строки
+                
+                const values = this.splitCSVLine(line);
+                
+                if (values.length === 0) continue;
+                
+                const item = {};
+                let hasData = false;
+                
+                // Сопоставляем значения с заголовками
+                for (let j = 0; j < Math.min(headers.length, values.length); j++) {
+                    let value = values[j].trim().replace(/^"|"$/g, '');
+                    
+                    // Если значение пустое, пропускаем
+                    if (value === '' || value === '""') continue;
+                    
+                    item[headers[j]] = value;
+                    hasData = true;
+                }
+                
+                if (hasData && Object.keys(item).length > 0) {
+                    data.push(item);
+                }
+            }
+            
+            console.log(`📊 CSV распарсен: ${data.length} записей`);
+            return data;
+            
+        } catch (error) {
+            console.error('❌ Ошибка парсинга CSV:', error);
+            console.log('Сырой текст для отладки:', csvText.substring(0, 200));
+            return [];
         }
-        
-        return data;
     }
     
-    // Парсит одну строку CSV
-    parseCSVLine(line) {
-        const values = [];
+    // Разделяет строку CSV с учетом кавычек
+    splitCSVLine(line) {
+        const result = [];
         let current = '';
         let inQuotes = false;
         
@@ -123,22 +137,23 @@ class SimpleFamilyDatabase {
             const char = line[i];
             
             if (char === '"') {
-                if (inQuotes && line[i + 1] === '"') {
+                // Проверяем двойные кавычки ""
+                if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
                     current += '"';
                     i++; // Пропускаем следующую кавычку
                 } else {
                     inQuotes = !inQuotes;
                 }
             } else if (char === ',' && !inQuotes) {
-                values.push(current);
+                result.push(current);
                 current = '';
             } else {
                 current += char;
             }
         }
         
-        values.push(current);
-        return values;
+        result.push(current); // Добавляем последнее значение
+        return result;
     }
     
     // ========== ПРЯМАЯ СИНХРОНИЗАЦИЯ ==========
@@ -155,6 +170,9 @@ class SimpleFamilyDatabase {
             try {
                 this.users = await this.loadSheet(this.sheets.users);
                 console.log(`✅ Пользователи: ${this.users.length} записей`);
+                if (this.users.length > 0) {
+                    console.log('Пример пользователя:', this.users[0]);
+                }
                 successCount++;
             } catch (error) {
                 console.error('❌ Ошибка загрузки пользователей:', error);
@@ -165,6 +183,9 @@ class SimpleFamilyDatabase {
             try {
                 this.applications = await this.loadSheet(this.sheets.applications);
                 console.log(`✅ Заявки: ${this.applications.length} записей`);
+                if (this.applications.length > 0) {
+                    console.log('Пример заявки:', this.applications[0]);
+                }
                 successCount++;
             } catch (error) {
                 console.error('❌ Ошибка загрузки заявок:', error);
@@ -205,6 +226,9 @@ class SimpleFamilyDatabase {
             try {
                 this.roles = await this.loadSheet(this.sheets.roles);
                 console.log(`✅ Роли: ${this.roles.length} записей`);
+                if (this.roles.length > 0) {
+                    console.log('Пример роли:', this.roles[0]);
+                }
                 successCount++;
             } catch (error) {
                 console.error('❌ Ошибка загрузки ролей:', error);
@@ -215,6 +239,9 @@ class SimpleFamilyDatabase {
             try {
                 this.codes = await this.loadSheet(this.sheets.roleCodes);
                 console.log(`✅ КодыРолей: ${this.codes.length} записей`);
+                if (this.codes.length > 0) {
+                    console.log('Пример кода:', this.codes[0]);
+                }
                 successCount++;
             } catch (error) {
                 console.error('❌ Ошибка загрузки кодов ролей:', error);
@@ -246,7 +273,6 @@ class SimpleFamilyDatabase {
     }
     
     // ========== МЕТОДЫ ДЛЯ ПОЛУЧЕНИЯ ДАННЫХ ==========
-    // Теперь просто возвращают данные из свойств
     
     async getUsers() {
         if (this.users.length === 0) {
@@ -307,15 +333,23 @@ class SimpleFamilyDatabase {
             if (currentUser.discordid) {
                 const userInDB = this.users.find(u => u.discordid === currentUser.discordid);
                 
-                if (userInDB && userInDB.role !== currentUser.role) {
-                    console.log(`🔄 Обновляю роль пользователя ${userInDB.username}: ${currentUser.role} → ${userInDB.role}`);
+                if (userInDB) {
+                    console.log(`👤 Найден пользователь в БД: ${userInDB.username}, роль: ${userInDB.role}`);
                     
-                    // Обновляем в localStorage
-                    localStorage.setItem('userRole', userInDB.role);
-                    localStorage.setItem('currentUser', JSON.stringify(userInDB));
-                    
-                    // Отправляем событие об обновлении
-                    this.triggerEvent('userRoleUpdated', userInDB);
+                    if (userInDB.role !== currentUser.role) {
+                        console.log(`🔄 Обновляю роль: ${currentUser.role || 'неизвестно'} → ${userInDB.role}`);
+                        
+                        // Обновляем в localStorage
+                        localStorage.setItem('userRole', userInDB.role);
+                        localStorage.setItem('currentUser', JSON.stringify(userInDB));
+                        
+                        // Отправляем событие об обновлении
+                        this.triggerEvent('userRoleUpdated', userInDB);
+                    } else {
+                        console.log(`✅ Роль совпадает: ${userInDB.role}`);
+                    }
+                } else {
+                    console.warn(`⚠️ Пользователь с discordid ${currentUser.discordid} не найден в БД`);
                 }
             }
         } catch (error) {
@@ -374,8 +408,35 @@ class SimpleFamilyDatabase {
         };
     }
     
-    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    // ========== ДЛЯ СОВМЕСТИМОСТИ ==========
     
+    // Метод для обратной совместимости (вызывается в другом файле)
+    async testConnection() {
+        console.log('🔍 Проверяю подключение к таблице...');
+        try {
+            const url = `https://docs.google.com/spreadsheets/d/${this.SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Роли`;
+            const response = await fetch(url, { method: 'HEAD' });
+            
+            if (response.ok) {
+                console.log('✅ Подключение к Google Sheets работает!');
+                return true;
+            } else {
+                console.warn(`⚠️ Подключение есть, но таблица недоступна: ${response.status}`);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Ошибка подключения:', error.message);
+            return false;
+        }
+    }
+    
+    // Старый метод syncAll для совместимости
+    async syncAll() {
+        console.log('⚠️ Используется устаревший метод syncAll(), используйте syncAllData()');
+        return await this.syncAllData();
+    }
+    
+    // Старый метод initialize для совместимости
     async initialize() {
         console.log('🚀 Инициализация базы данных...');
         
@@ -400,11 +461,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Даем странице немного загрузиться
     setTimeout(async () => {
-        await window.FamilyDatabase.initialize();
-        
-        // Проверяем и обновляем роль текущего пользователя
-        await window.FamilyDatabase.updateCurrentUserRole();
-        
-        console.log('✅ Готово! Данные загружены из таблицы.');
+        try {
+            // Инициализируем базу данных
+            await window.FamilyDatabase.initialize();
+            
+            // Проверяем и обновляем роль текущего пользователя
+            await window.FamilyDatabase.updateCurrentUserRole();
+            
+            console.log('✅ Готово! Данные загружены из таблицы.');
+            
+            // Проверяем себя в базе
+            const me = await window.FamilyDatabase.findUserByDiscordId("9134649962671");
+            if (me) {
+                console.log('👤 Мой профиль в БД:', me);
+                console.log('🎭 Моя роль в БД:', me.role);
+                
+                // Если в БД админ, а в localStorage нет - обновляем
+                if (me.role === 'admin' && localStorage.getItem('userRole') !== 'admin') {
+                    localStorage.setItem('userRole', 'admin');
+                    localStorage.setItem('currentUser', JSON.stringify(me));
+                    console.log('🎉 Автоматически выдана роль админа из таблицы!');
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Ошибка при инициализации:', error);
+        }
     }, 1000);
 });
+
+// Экспорт для использования в других модулях
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SimpleFamilyDatabase;
+}
