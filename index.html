@@ -5532,6 +5532,46 @@ function hasPermission(permission) {
     
     return role.permissions.includes(permission);
 }
+// Функция для миграции данных из localStorage в Firebase
+async function migrateToFirebase() {
+    console.log("🔄 Начинаю миграцию данных в Firebase...");
+    
+    // Мигрируем черный список
+    const localBlacklist = JSON.parse(localStorage.getItem('familyBlacklist') || '[]');
+    for (const item of localBlacklist) {
+        await firebaseAPI.addToBlacklist(item);
+    }
+    
+    // Мигрируем заявки
+    const localApplications = JSON.parse(localStorage.getItem('familyApplications') || '[]');
+    for (const app of localApplications) {
+        await firebaseAPI.addApplication(app);
+    }
+    
+    // Мигрируем новости
+    const localNews = JSON.parse(localStorage.getItem('familyNews') || '[]');
+    for (const news of localNews) {
+        await firebaseAPI.addNews(news);
+    }
+    
+    // Мигрируем чат
+    const localChat = JSON.parse(localStorage.getItem('familyChat') || '[]');
+    for (const msg of localChat) {
+        await firebaseAPI.addChatMessage(msg);
+    }
+    
+    console.log("✅ Миграция завершена!");
+    showNotification('success', 'Данные перенесены в облако!');
+    
+    // Очищаем localStorage (опционально)
+    // localStorage.removeItem('familyBlacklist');
+    // localStorage.removeItem('familyApplications');
+    // localStorage.removeItem('familyNews');
+    // localStorage.removeItem('familyChat');
+}
+
+// Запустить миграцию можно из консоли: migrateToFirebase()
+window.migrateToFirebase = migrateToFirebase;
 </script>
 </body>
 </html>
