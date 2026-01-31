@@ -2920,16 +2920,21 @@
             return getRoleByKey(user.role) || getRoleByKey('guest');
         }
 
-       function hasPermission(user, permission) {
-    // Добавь проверки
-    if (!user || !user.role || !user.role.permissions) {
-        console.warn('Нет прав доступа: пользователь или роль не определены', user);
-        return false;
+      function hasPermission(permission) {
+    const user = getCurrentUser();
+    if (!user) return false;
+    
+    // Для чата - доступ есть у всех авторизованных
+    if (permission === 'manage_chat') {
+        return true; // Все авторизованные могут писать в чат
     }
     
-    return user.role.permissions.includes(permission);
+    // Для остальных прав - проверяем роль
+    const role = getUserRole(user);
+    if (!role || !role.permissions) return false;
+    
+    return role.permissions.includes(permission);
 }
-
         // Обновить UI авторизации
         function updateAuthUI() {
             const user = getCurrentUser();
@@ -3010,7 +3015,8 @@
                     createNewsBtn.style.display = 'none';
                 }
                 
-                chatNavLink.style.display = hasPermission('manage_chat') ? 'flex' : 'none';
+                // Чат виден всем авторизованным пользователям
+chatNavLink.style.display = user ? 'flex' : 'none';
                 
             } else {
                 authButtons.style.display = 'flex';
