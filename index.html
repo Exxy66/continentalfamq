@@ -5397,7 +5397,38 @@ async function getUsers() {
         return [];
     }
 }
+// Функция для получения ролей из Firebase
+async function getRoles() {
+    try {
+        const roles = JSON.parse(localStorage.getItem('familyRoles') || '[]');
+        return roles;
+    } catch (error) {
+        console.error("❌ Ошибка загрузки ролей:", error);
+        return [];
+    }
+}
 
+// Функция для сохранения ролей
+async function saveRoles(roles) {
+    try {
+        localStorage.setItem('familyRoles', JSON.stringify(roles));
+        return { success: true };
+    } catch (error) {
+        console.error("❌ Ошибка сохранения ролей:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Функция для добавления пользователя
+async function addUser(userData) {
+    try {
+        const docRef = await addDoc(collection(db, "users"), userData);
+        return { success: true, id: docRef.id };
+    } catch (error) {
+        console.error("❌ Ошибка добавления пользователя:", error);
+        return { success: false, error: error.message };
+    }
+}
 // Делаем функции доступными глобально
 window.firebaseAPI = {
     addApplication,
