@@ -5148,5 +5148,179 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
     </script>
+    <script>
+// Конфигурация базы данных
+const DB_CONFIG = {
+  scriptUrl: 'https://script.google.com/macros/s/AKfycbwFKjxPPeEI8Zfnbj4FxJpJv53KTM5_YUldtWvYFF6ncOwOHK0T5nsHAT6cYm80w0gEyw/exec', // URL из развертывания Apps Script
+  spreadsheetId: '1-mxQn7VmqAXudg5adai7iqkvqupxJP_t-cBEuO4W8k8'
+};
+
+// Универсальная функция работы с базой
+async function dbRequest(action, table, data = null) {
+  try {
+    const payload = { action, table, data };
+    
+    // Пытаемся отправить в облако
+    const response = await fetch(DB_CONFIG.scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    
+    const result = await response.json();
+    
+    // Сохраняем в локальное хранилище как резервную копию
+    const cacheKey = `db_cache_${table}`;
+    if (action === 'get') {
+      localStorage.setItem(cacheKey, JSON.stringify(result));
+    }
+    
+    return result;
+  } catch (error) {
+    console.warn('Ошибка облачной базы, использую локальный кеш:', error);
+    
+    // Используем локальный кеш при ошибке
+    const cacheKey = `db_cache_${table}`;
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (action === 'get' && cached) {
+      return JSON.parse(cached);
+    }
+    
+    if (action === 'add' && data) {
+      // Сохраняем локально до синхронизации
+      const pendingKey = `db_pending_${table}`;
+      const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+      pending.push({ ...data, _pending: true, _timestamp: Date.now() });
+      localStorage.setItem(pendingKey, JSON.stringify(pending));
+    }
+    
+    return action === 'get' ? [] : { success: false, error: 'Offline mode' };
+  }
+}
+
+// === ОБНОВЛЕННЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ===
+
+// Загрузить черный список
+async function loadBlacklistFromDB() {
+  const blacklist = await dbRequest('get', 'blacklist');
+  window.blacklistData = blacklist;
+  updateBlacklistDisplay();
+}
+
+// Добавить в черный список
+async function addToBlacklistDB(formData) {
+  const newEntry = {
+    id: Date.now().toString(),
+    nickname: formData.blacklist_nickname,
+    discord_id: formData.blacklist_discord_id,
+    reason: formData.blacklist_reason,
+    date: new Date().toISOString(),
+    addedBy: getCurrentUser()?.username || 'System'
+  };
+  
+  await dbRequest('add', 'blacklist', newEntry);
+  await loadBlacklistFromDB(); // Обновляем список
+}
+
+// Загрузить заявки
+async function loadApplicationsFromDB() {
+  const applications = await dbRequest('get', 'applications');
+  displayApplications(applications);
+}
+
+// Отправить заявку
+async function submitApplicationDB(formData) {
+  const newApp = {
+    id: Date.now().toString(),
+    ...formData,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+  
+  await dbRequest('add', 'applications', newApp);
+  return newApp;
+}
+
+// Чат
+async function loadChatFromDB() {
+  const messages = await dbRequest('get', 'chat');
+  displayChat(messages);
+}
+
+async function sendChatMessageDB(messageData) {
+  await dbRequest('add', 'chat', messageData);
+  await loadChatFromDB();
+}
+
+// Новости
+async function loadNewsFromDB() {
+  const news = await dbRequest('get', 'news');
+  displayNews(news);
+}
+
+async function addNewsDB(newsData) {
+  await dbRequest('add', 'news', newsData);
+  await loadNewsFromDB();
+}
+
+// Пользователи и роли
+async function loadUsersFromDB() {
+  return await dbRequest('get', 'users');
+}
+
+async function loadRolesFromDB() {
+  const roles = await dbRequest('get', 'roles');
+  // Если ролей нет, создаем стандартные
+  if (!roles || roles.length === 0) {
+    await initDefaultRoles();
+    return await dbRequest('get', 'roles');
+  }
+  return roles;
+}
+
+// === ИНИЦИАЛИЗАЦИЯ ===
+
+async function initializeDatabase() {
+  console.log('Инициализация базы данных...');
+  
+  // Проверяем подключение
+  try {
+    const test = await dbRequest('get', 'blacklist');
+    console.log('✅ База данных подключена');
+    
+    // Загружаем все данные
+    await Promise.all([
+      loadBlacklistFromDB(),
+      loadApplicationsFromDB(),
+      loadChatFromDB(),
+      loadNewsFromDB()
+    ]);
+    
+    showNotification('success', 'База данных синхронизирована');
+    
+  } catch (error) {
+    console.warn('⚠️ Работаем в офлайн-режиме:', error);
+    showNotification('warning', 'Офлайн-режим. Данные сохраняются локально.');
+  }
+}
+
+// Замените старые функции на новые
+document.addEventListener('DOMContentLoaded', async () => {
+  // ... существующий код ...
+  
+  // Инициализируем базу после загрузки страницы
+  setTimeout(initializeDatabase, 1000);
+  
+  // Обновляем обработчики форм
+  const blacklistForm = document.getElementById('blacklistForm');
+  if (blacklistForm) {
+    blacklistForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // ... валидация ...
+      await addToBlacklistDB(formData);
+    });
+  }
+});
+</script>
 </body>
 </html>
